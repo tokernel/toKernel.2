@@ -1,0 +1,458 @@
+
+ toKernel - Universal PHP Framework - CHANGELOG
+ ==============================================
+
+ Version 2.0.0 - 12/04/2016
+ --------------------------
+ 
+ Welcome aboard on next generation of toKernel Framework! 
+ 
+ - Professional solution to build perfect RESTFul API for your mobile applications.
+ - Easy way to develop a project wirh Frontend and Backend access.
+ - A lot of abilities to make modules of controllers as many as possible 
+	with splitting by your business logic and ideas.
+ - Database abstraction layer with model development and CRUD.
+ 
+ Let's say: so many things were changed and re-developed to make your development cycle  easy and flexible!
+ 
+ -----------------------------------------
+ 
+ Debugging
+	
+	1. Removed debugging information from web pages bottom.
+		Of course, we always able to see debug information in debug log files.
+	
+	2. Removed debug information items "debug_mode", "debug_mode_ajax" in section [RUN_MODE] from application configuration file.
+		
+		
+	Files: /application/config/application.ini
+	   	   /tokernel.framework/templates/debug.tpl.php
+	
+ Language parsing in CLI (Command line interface) mode
+  
+	1. The CLI runtime accepts only English language.
+	
+	2. Removed items "cli_parse_language", "cli_default_language", "cli_allowed_languages" in section [CLI] from configuration file.
+	
+	Files: /application/config/application.ini
+		   /tokernel.framework/lib/cli.lib.php
+		   
+ Language parsing in HTTP mode
+ 
+	1. It is possible to detect browser language to set.
+		If the value of item "http_catch_browser_language" is 1 in application configuarion file,
+		The language of browser will be detected and set if allowed in allowed languages.
+		
+	2. New item "http_catch_browser_language" added into section [HTTP] in application configuration file.
+	
+	Files: /application/config/application.ini
+		   /tokernel.framework/lib/url.lib.php
+		   
+ Parsing parameters from URL
+	
+	1. Functionality of parsing parameters from url as assoc (item1/value1/item2/value2) removed.
+		It is now possible to parse parameters only as is (value1/value2/valueN).
+		
+	2. Removed item "http_params_mode" from section [HTTP] in application configuration file.
+	
+	Files: /application/config/application.ini
+		   /tokernel.framework/lib/url.lib.php	
+		   
+ Photo Library
+	
+	1. Photo file processing class library deprecated (removed)
+	
+	File: /application/config/photos.ini
+		  /tokernel.framework/lib/photo.lib.php
+	
+ Framework kernel base files.
+	
+	1. Some files of base classes moved or added to tokernel.framework/base/ directory
+	2. Addon base class library - Version 4.0.0
+	3. Base database model class = Version 1.0.0
+	4. Module base class library - Version 3.0.0
+	5. Base View class - Version 2.0.0
+	
+	Files: /tokernel.framework/base/addon.class.php
+		   /tokernel.framework/base/model.class.php
+		   /tokernel.framework/base/module.class.php
+	       /tokernel.framework/base/view.class.php
+ 
+ Addons
+	
+	1. Changed the way to access addons.
+	
+		Instead of:
+			$this->lib->addons->some_addon;
+		Calling:
+			$this->addons->some_addon;
+ 
+		This gives effect to all files of application:
+			addons, mudules, views.
+
+ 	2. Method get_modules() removed from addon kernel class.
+
+	3. Addon Class constructor defined only with $params array argument, instead of more than one arguments.
+
+     	class user_addon extends addon {
+
+       		public function __construct($params) {
+       			parent::__construct($params);
+       		}
+
+		}
+
+	File: /tokernel.framework/kernel/addons.class.php
+		  /tokernel.framework/base/addon.class.php
+
+ Modules
+
+ 	1. Removed the way to get module object by addon getter method.
+ 		Instead of:
+ 			$this->module_name->some_function();
+ 		It is required to load module object
+ 			$module = $this->load_module('module_name');
+ 			$module->->some_function();
+
+	3. Module constructor defined only with parameter $params instead of many parameters.
+
+		class user_auth_module extends module {
+
+        	public function __construct($params) {
+           		parent::__construct($params);
+           	}
+
+        }
+
+ 	Files:  /tokernel.framework/kernel/addons.class.php
+ 			/tokernel.framework/base/addon.class.php
+ 			/tokernel.framework/base/module.class.php
+
+ Application global values access
+	
+	This approach is very useful to use in addons and templates.
+ 
+	1. Set global value to application with method $this->app->set_var($item, $value);
+	
+	2. Get global value from application with method $this->app->get_var($item);
+	
+	3. Get all global values of application $this->app->get_vars();
+	
+	File: /tokernel.framework/kernel/app.http.class.php
+ 
+ Error 404 - page not found
+	
+	1. Now the Error 404 page will be loaded from current run mode.
+		Each mode backend and frontend has own error 404 template file.
+
+	2. Template file has ability to use any of widget and include css and js files like other templates do.
+		
+	3. Removed functionality of Error 404 from application Error handler.
+			
+	4. Removed redirection of Error 404.
+		It is now not possible to redirect to some url, if page not found.
+		If page not found, than page not found :)
+		
+	5. Removed item "redirect_404" in section [HTTP] from application configuration file.
+			   
+	6. Removed item "show_errors_404" in section [ERROR_HANDLING] from application configuration file.
+	
+	7. If Logging 404 error is enabled, The Client IP will be logged with error message.
+		Same for Debug log. This will log the Client IP in Debug message with Error 404 Message.
+	
+	File: /application/config/application.ini
+		  /tokernel.framework/kernel/app.http.class.php
+		  /tokernel.framework/kernel/e.core.class.php
+	      /tokernel.framework/kernel/e.http.class.php
+		  /application/templates/backend/error_404.tpl.php
+		  /application/templates/frontend/error_404.tpl.php
+ 
+ Template initialization
+	
+	1. It is now possible to set template name with variables.
+		
+		$this->app->set_template(
+			'user_login',  // Template name
+			array(
+				'screen_logo' => 'hello.jpg',
+				'word' => 'Hello User!'
+			)
+		);	
+		
+		In the template file we can use values as:
+		
+		<img src="{var.screen_logo}" />
+		<h1>{var.word}</h1>
+	
+		Same approach works for view files loading.
+		See bellow.
+	
+ Aliasing aka Routing
+
+	1. Removed Aliasing functionality with files.
+	
+	2. It is now Routing functionality available with a lot of advantages.
+	
+	Files: /tokernel.framework/kernel/routing.class.php
+		   /application/config/routes.ini
+	
+ Pagination library 
+ 
+	1. New Version of pagination library Veersion 2.0.0
+	
+	File: /tokernel.framework/lib/pagination.lib.php
+	
+ Data filtering class library Version 2.0.0
+
+	1. It is now possible to get Global arrays such as _PUT and _DELETE for RESTFul API development.
+		$this->lib->filter->put('item_name');
+		$this->lib->filter->delete('item_name');
+	
+	File: /tokernel.framework/lib/filter.lib.php
+	a
+ Data Encryption library Version 1.0.0
+	
+	1. Simple encryption library implementation of AES-256 encryption in CBC mode
+		that uses PBKDF2 to create encryption key out of plain-text password
+		and HMAC to authenticate the encrypted message.
+	
+	File: /tokernel.framework/lib/encryption.lib.php
+	
+ Base classes for addons, modules, views, models
+	
+	1. In the application/base directory we have all possible base classes to extend for addons, modules, views, models
+	
+	2. It is possible to pass this option and just define class as before like:
+		
+		class test_addon extends addon {}
+		
+		This will extend main parent adon class from framework.
+		
+		However, the main goal to define an addon class and extend to base is to make some development/additional base functionality for adon and extend it:
+		
+		class test_addon extends base_addon {}
+		
+		where the base_addon class is customized depends on your needs.
+		
+		Same feature available for modules, models, views.
+	
+	Directory: /application/base/
+	Files: /application/base/base_addon.class.php
+		   /application/base/base_model.class.php
+		   /application/base/base_module.class.php
+		   /application/base/base_view.class.php
+	
+ Kernel Hooks vile version 1.1.0
+
+	1. It is now $this->addon object accessible in each application hook file.
+	
+	File: /tokernel.framework/kernel/hooks.class.php
+	
+ Predefined constants
+	
+	1. Some constants removed due to the state of unused.
+		TK_ERROR_404
+		TK_AMP
+		TK_SP
+		TK_PPREV
+		TK_PNEXT
+		TK_COPY
+		
+	2. Some new constants added for libraries usage
+		TK_APP_INI
+		TK_ROUTES_INI
+		TK_DB_CONFIG_INI
+		TK_EMAIL_CONFIG_INI
+		TK_CACHING_CONFIG_INI
+
+	3. Renamed constants
+		TK_APP_PATH -> TK_ROOT_PATH
+		TK_CUSTOM_PATH -> TK_APP_PATH
+		TK_CUSTOM_DIR -> TK_APP_DIR
+		
+	File: /tokernel.framework/config/constants.php	
+	
+ Source code compression library Version 1.0.0
+	
+	1. Compress and combine the list of files to one.
+		This library is very useful if you want to compress and combine more than one javascript or CSS files to cache.
+		
+	File: tokernel.framework/lib/compress.lib.php	
+	
+ Multilanguage support
+	
+	1. From toKernel version 2.0.0 Languages supported only by application. 
+		Addons and modules not supporting own language files.
+		However the language usage is same for addons, modules and view filess.
+		Just in case, the method language() recalling the application's language() method insteadof own.
+	
+	Files: /tokernel.framework/kernel/addons.class.php
+		   /tokernel.framework/base/addon.class.php
+		   /tokernel.framework/base/module.class.php
+		   /tokernel.framework/base/view.class.php 
+
+ New functionality of Cache libraries
+
+   	1. It is now possible to get instance of new cache library defined in /application/config/caching.ini
+
+   	2. New Type of caching library "apcucache" Version 1.0.0
+
+   	Files:  /application/config/caching.ini
+   			/tokernel.framework/lib/cache.lib.php
+   			/tokernel.framework/lib/cache/cache_base.lib.php
+   			/tokernel.framework/lib/cache/apcucache.lib.php
+   			/tokernel.framework/lib/cache/filecache.lib.php
+   			/tokernel.framework/lib/cache/memcache.lib.php
+
+ Database abstraction layer
+
+ 	1. Database abstraction layer: New approach to work with databases
+ 		For now supports: MySQL, PostreSQL, Sqlite
+		This is another kind of database modules development and database access.
+
+ 	2. It is possible to work with many instances of database layers defined in /application/config/databases.ini
+
+	3.Ability to create models for Database access
+		/addons/{addon_name}/models/{model_name}.model.php
+
+	4. Models can be located in subdirectories.
+
+	5. Models can be extended
+
+	6. Models can be loaded with method load_model() as the modules and view loading.
+
+	Files:	/application/config/databases.ini
+	 		/tokernel.framework/base/model.class.php
+	 		/tokernel.framework/lib/db.lib.php
+	 		/tokernel.framework/lib/db/db_base.lib.php
+	 		/tokernel.framework/lib/db/mysql/db_mysql.lib.php
+	 		/tokernel.framework/lib/db/mysql/db_mysql_query_result.lib.php
+	 		/tokernel.framework/lib/db/postgresql/db_postgresql.lib.php
+	 		/tokernel.framework/lib/db/postgresql/db_postgresql_query_result.lib.php
+	 		/tokernel.framework/lib/db/sqlite/db_sqlite.lib.php
+	 		/tokernel.framework/lib/db/sqlite/db_sqlite_query_result.lib.php
+
+ New Version of email libraries
+
+ 	1. It is now possible to use more than one type of email protocols in one application
+ 		depends on configuration. Email configuration file: /application/config/email.ini
+
+ 	2. Now, each type of email protocol have it's own library
+ 		Supported protocols: phpmail, sendmail, smtp
+
+ 	3. It is possible to totally debug email sending which can be defined in configuration section.
+
+ 	Files: 	/application/config/email.ini
+ 			/tokernel.framework/lib/email.lib.php
+ 			/tokernel.framework/lib/email/email_base.lib.php
+ 			/tokernel.framework/lib/email/phpmail.lib.php
+			/tokernel.framework/lib/email/sendmail.lib.php
+			/tokernel.framework/lib/email/smtp.lib.php
+
+ Routing instead of aliasing.
+
+ 	1. In this new version of toKernel framework we have a new approach of URL parsing and routing.
+		Routing defined and explained in /application/config/routes.ini
+
+	Files: 	/application/config/routes.ini
+			/tokernel.framework/kernel/routing.class.php
+			/tokernel.framework/lib/url.lib.php
+
+ New type of widget definition
+
+ 	1. Ability to define widgets in template file to access directly to module method.
+		Call method "c" of Module "b" of addon "a"
+		<!-- widget addon="a" module="b" action="c" params="k=4|j=55" -->
+
+		Instead of call addon's method only.
+
+		Another example, where the module file located in "widgets" subdirectory:
+		<!-- widget addon="someaddon" module="widgets/form" action="somemethodofmodule" params="k=4|j=55" -->
+
+ 	Files: /tokernel.framework/lib/template.lib.php
+
+ Application global values set and get in HTTP mode
+
+ 	1. Methods: set_var(), get_var(), get_vars() allows to get and set application global values.
+ 		For example: it is possible to set value in some addon or module and get it in template file.
+
+	Files: /tokernel.framework/kernel/app.http.class.php
+
+ Template with defined values
+
+  	1. When defining application main template in HTTP mode, it is possible to define values
+  		Example:
+  		$this->app->set_template(
+  			'templatename',
+  			array(
+  				'var1' => 'val1',
+  				'var2' => 'val2'
+  			)
+  		);
+
+  		This values can be used/echoed in template file as {var.var1}, {var.var2}
+
+  	Files: 	/tokernel.framework/kernel/app.http.class.php
+  		 	/tokernel.framework/lib/template.lib.php
+
+ Global values in templates and view files
+
+ 	1. Application default and user defined values accessible in templates and view files.
+
+ 	 	Application default values:
+
+		Base url: {var.base_url}
+   		Base url with language: {var.base_url_lng}
+   		App URL: {var.app_url}
+        Theme name: {var.theme_name}
+        Theme URL: {var.theme_url}
+        Theme images URL: {var.theme_images_url}
+        Theme js url: {var.theme_js_url}
+        Theme css url: {var.theme_css_url}
+        Uploads url: {var.uploads_url}
+        Language prefix: {var.language_prefix}
+        Date: {var.date}
+        Year: {var.year}
+        Month: {var.month}
+        Day: {var.day}
+
+	2. Also it is possible to define value in app->set_template() and this->load_view() functionality.
+
+	3. In any part of code where the application instance is available as $this->app we can set:
+	 	$this->app->set_var('name', 'David');
+       	and in any view file or template file output the values as {var.name}
+
+	Files: 	/tokernel.framework/kernel/app.http.class.php
+      		/tokernel.framework/lib/template.lib.php
+      		/tokernel.framework/base/view.class.php
+
+ Location of Modules, Views, Models
+
+ 	1. Models, Modules, View files can be located in subdirectories depends on your needs.
+
+ Template library Version 2
+
+ 	1. It is possible to load and parse template in any part of code.
+ 	Example:
+
+ 		$template_obj = $this->lib->template->instance(
+    		'template_name',
+    		array (
+    			'var1' => 'val1',
+    			'var2' => 'val2',
+    		)
+    	);
+
+    	$complete_buffer = $template_obj->run();
+
+    	echo $complete_buffer;
+
+	Files: /tokernel.framework/lib/template.lib.php
+
+ New Generator library Version 1
+
+ 	1. New experimental library to generate random data like: Username, email, password, host, etc...
+
+ 	File: tokernel.framework/lib/generator.lib.php
+
+ End of file

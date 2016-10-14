@@ -73,7 +73,7 @@ body {
 </style>
 </head>
 <body>
-<!-- widget addon="usage" module="module2" action="test_top_menu" -->
+<!-- _widget addon="usage" module="module2" action="test_top_menu" -->
 <div align="center">
 	<div align="left" class="main_div">
 		<h1>{var.title}</h1>

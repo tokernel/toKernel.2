@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    4.0.0
+ * @version    4.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */ 
@@ -234,26 +234,27 @@ require_once(TK_PATH . 'kernel' . TK_DS . 'app.' . TK_RUN_MODE . '.class.php');
 /* Include parent addon class */
 require_once(TK_PATH . 'base' . TK_DS . 'addon.class.php');
 
-/* Include Extended base addon class */
-require_once(TK_APP_PATH . 'base' . TK_DS . 'base_addon.class.php');
-
 /* Include parent module class */
 require_once(TK_PATH . 'base' . TK_DS . 'module.class.php');
-
-/* Include extended base module class */
-require_once(TK_APP_PATH . 'base' . TK_DS . 'base_module.class.php');
 
 /* Include parent model class */
 require_once(TK_PATH . 'base' . TK_DS . 'model.class.php');
 
-/* Include extended base model class */
-require_once(TK_APP_PATH . 'base' . TK_DS . 'base_model.class.php');
-
 /* Include parent view class */
 require_once(TK_PATH . 'base' . TK_DS . 'view.class.php');
 
-/* Include extended base view class */
-require_once(TK_APP_PATH . 'base' . TK_DS . 'base_view.class.php');
+/**
+ * Include all Base files from application/base/*
+ */
+$app_base_files = $lib->file->ls(TK_APP_PATH . 'base', '-', false, 'php');
+
+if(!empty($app_base_files)) {
+    foreach($app_base_files as $file) {
+        require_once(TK_APP_PATH . 'base' . TK_DS . $file);
+    }
+}
+
+unset($app_base_files);
 
 tk_e::log_debug('Loading app instance', 'Loader');
 

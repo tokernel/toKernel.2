@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    4.0.0
+ * @version    4.0.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -374,9 +374,9 @@ abstract class addon {
  */ 
  public function app_url() {
  	if(TK_APP_DIR != '') {
- 		return $this->lib->url->base_url() . TK_APP_DIR . '/addons/' . $this->id;
+ 		return $this->lib->url->base_url() . '/' . TK_APP_DIR . '/addons/' . $this->id;
  	} else {
- 		return $this->lib->url->base_url() . TK_DIR . '/addons/' . $this->id;
+ 		return $this->lib->url->base_url() . '/' . TK_DIR . '/addons/' . $this->id;
  	}
  } 
 

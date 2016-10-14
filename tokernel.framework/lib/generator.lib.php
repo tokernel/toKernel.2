@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.0.0
+ * @version    1.1.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -40,6 +40,22 @@ defined('TK_EXEC') or die('Restricted area.');
 class generator_lib {
 
 	/**
+	 * Create random generated number
+	 *
+	 * @access public
+	 * @param int $length
+	 * @return int
+	 * @since 1.1.0
+	 */
+	public function create_number($length) {
+
+		$min = 1 . str_repeat(0, $length - 1);
+		$max = str_repeat(9, $length);
+		return mt_rand($min, $max);
+
+	} // End func create_number
+
+	/**
 	 * Create random generated password
 	 *
 	 * @access public
@@ -49,7 +65,7 @@ class generator_lib {
 	 * @return string
 	 * @since 1.0.0
 	 */
-	function create_password($min = 6, $max = 15, $uppercase = true) {
+	public function create_password($min = 6, $max = 15, $uppercase = true) {
 
 		return $this->create_string($min, $max, $uppercase, true, true);
 
@@ -64,7 +80,7 @@ class generator_lib {
 	 * @return string
 	 * @since 1.0.0
 	 */
-	function create_username($min = 6, $max = 12) {
+	public function create_username($min = 6, $max = 12) {
 
 		$str = $this->create_name($min, $max, false, '-.');
 		$is_num = mt_rand(0, 1);
@@ -86,7 +102,7 @@ class generator_lib {
 	 * @return string
 	 * @since 1.0.0
 	 */
-	function create_email($domain = NULL) {
+	public function create_email($domain = NULL) {
 
 		$min = 3;
 		$max = 12;
@@ -113,7 +129,7 @@ class generator_lib {
 	 * @return string
 	 * @since 1.0.0
 	 */
-	function create_domain($country = NULL) {
+	public function create_domain($country = NULL) {
 
 		$min = 3;
 		$max = 12;
@@ -212,7 +228,7 @@ class generator_lib {
 	 * @return string
 	 * @since 1.0.0
 	 */
-	function create_sentence($str = NULL) {
+	public function create_sentence($str = NULL) {
 
 		if(is_null($str)) {
 			$str = "{Hello!|Hi!|Hola!} {maybe|actually|fortunately} this is {your|our|my} {best|nice|well|cool|lucky} {chance|option|case|moment} {to|for} {make|take|get|generate|create|give|catch|bring} a random {sentence|string|expression}.";
@@ -348,7 +364,7 @@ class generator_lib {
 
 	} // End func create_ip
 
-/* End of class generator_lib */
+	/* End of class generator_lib */
 }
 
 /* End of file */

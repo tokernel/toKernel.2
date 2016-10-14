@@ -28,7 +28,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.0.0
+ * @version    1.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.6.0
  */
@@ -132,21 +132,28 @@ class compress_lib {
 	 */
 	public function file($source_file, $destination_file = NULL) {
 
-		// Detect type
-		$type = $this->lib->file->ext($source_file);
+		$content = '';
 
-		// Check if type allowed
-		if(!in_array($type, $this->file_types)) {
-			trigger_error('Invalid file type: ' . $type, E_USER_ERROR);
+		if(substr($source_file, 0, 2) == '//' or substr($source_file, 0, 4) == 'http') {
+			$content .= $this->remote_file($source_file);
+		} else {
+
+			// Detect type
+			$type = $this->lib->file->ext($source_file);
+
+			// Check if type allowed
+			if(!in_array($type, $this->file_types)) {
+				trigger_error('Invalid file type: ' . $type . '(File: ' . $source_file . ')', E_USER_ERROR);
+			}
+
+			// Check file
+			if(!is_readable($source_file) or !is_file($source_file)) {
+				trigger_error("File: " . $source_file . " doesn't exists!", E_USER_ERROR);
+			}
+
+			// Load content
+			$content .= $this->lib->file->read($source_file);
 		}
-
-		// Check file
-		if(!is_readable($source_file) or !is_file($source_file)) {
-			trigger_error("File: " . $source_file . " doesn't exists!", E_USER_ERROR);
-		}
-
-		// Load content
-		$content = $this->lib->file->read($source_file);
 
 		// Compress by type
 		if($type == 'js') {
@@ -195,12 +202,18 @@ class compress_lib {
 		$content = '';
 
 		// Build/combine content with all files
-		foreach($source_files as $file => $do_compress) {
+		foreach($source_files as $source_file => $do_compress) {
 
 			if($do_compress == true) {
-				$content .= $this->file($file);
+				$content .= $this->file($source_file);
 			} else {
-				$content .= $this->lib->file->read($file);
+
+				if(substr($source_file, 0, 2) == '//' or substr($source_file, 0, 4) == 'http') {
+					$content .= $this->remote_file($source_file);
+				} else {
+					$content .= $this->lib->file->read($source_file);
+				}
+
 			}
 
 		} // End foreach
@@ -217,6 +230,37 @@ class compress_lib {
 		return $destination_file;
 
 	} // End func files
+
+	/**
+	 * Get remote file to process
+	 *
+	 * @access protected
+	 * @param string $url
+	 * @return mixed sting | false
+	 * @since 1.1.0
+	 */
+	protected function remote_file($url) {
+
+		$ch = curl_init();
+		$timeout = 5;
+
+		$userAgent = 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; .NET CLR 1.1.4322)';
+		curl_setopt($ch, CURLOPT_USERAGENT, $userAgent);
+
+		curl_setopt($ch, CURLOPT_FAILONERROR, true);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_AUTOREFERER, true);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+		$data = curl_exec($ch);
+		curl_close($ch);
+
+		return $data;
+
+	} // End func remote_file
 
 } // End class compress_lib
 

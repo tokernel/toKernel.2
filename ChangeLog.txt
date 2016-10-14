@@ -455,4 +455,23 @@
 
  	File: tokernel.framework/lib/generator.lib.php
 
+ Version 2.1.0 - 14/10/2016
+ --------------------------
+
+ New Functionality for Application base classes.
+
+    1. It is possible to create more base classes for inherit.
+        All Application base classes will be included automatically.
+
+        Example: Create /application/base/user_addon_base.class.php
+        With class name:
+            class user_addon_base extends base_addon {}
+
+        Then, your addon class can be defined as:
+            class user_addon extends user_addon_base {}
+
+ ini library Version 1.2.1
+
+    1. Fixed usage of array key rename.
+
  End of file

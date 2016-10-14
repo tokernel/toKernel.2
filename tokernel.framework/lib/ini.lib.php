@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.2.0
+ * @version    1.2.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  * @todo	   Create functions - sync, compare.
@@ -517,7 +517,7 @@ class ini_lib {
 		return false;
 	}
 
-	$this->ini_arr = $this->lib->data->array_key_rename($section, 
+	$this->ini_arr = $this->lib->array->array_key_rename($section,
 												$new_section, $this->ini_arr);
 	
 	return true;
@@ -720,7 +720,7 @@ class ini_lib {
 	
 	// find replace in entire array
 	if(is_null($section) and $this->item_exists($item)) {
-		$this->ini_arr = $this->lib->data->array_key_rename($item, $new_item, 
+		$this->ini_arr = $this->lib->array->array_key_rename($item, $new_item,
 															$this->ini_arr);	
 		return true;
 	}
@@ -732,7 +732,7 @@ class ini_lib {
 	
 	// Search in section if isset
 	if($this->item_exists($item, $section)) {
-		$this->ini_arr[$section] = $this->lib->data->array_key_rename($item, 
+		$this->ini_arr[$section] = $this->lib->array->array_key_rename($item,
 										$new_item, $this->ini_arr[$section]);
 		return $section;
 	}

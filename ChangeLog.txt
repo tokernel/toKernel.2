@@ -474,4 +474,12 @@
 
     1. Fixed usage of array key rename.
 
+ compress library Version 1.1.0
+
+    1. New method to get and compress remote files such as external javascript APIs.
+
+ generator library Version 1.1.0
+
+    1. New method to generate number create_number().
+
  End of file

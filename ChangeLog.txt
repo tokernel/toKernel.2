@@ -482,4 +482,164 @@
 
     1. New method to generate number create_number().
 
+ Version 2.2.0 - 18/12/2016
+ --------------------------
+
+ Language parsing configuration
+
+    1. In the application configuration, it is now possible to set "http_default_language" and "http_allowed_languages" separately for frontend and backend mode.
+        i.e. Frontend of website can accept many languages, when the backend (Administrator panel) can support only one, default english language.
+
+    2. New items added in [HTTP] section:
+        http_frontend_default_language=
+        http_backend_default_language=
+
+        http_frontend_allowed_languages=
+        http_backend_allowed_languages=
+
+    3. Items removed from from [HTTP] section:
+        http_default_language=
+        http_allowed_languages=
+
+    Files:
+        application/config/application.ini
+        tokernel.framework/lib/url.lib.php
+
+ Base Addon class library Version 4.1.0
+
+    1. Now supports own languages (like before, in toKernel Version 1.x)
+        Language files can be located in {addon_path}/languages/
+
+        Usage as always: $this->language()
+
+    File: tokernel.framework/base/addon.class.php
+
+ Base Module class library Version 3.1.0
+
+    1. Now supports own parent addon languages (like before, in toKernel Version 1.x)
+            Language files can be located in {addon_path}/languages/
+
+    2. It is also possible to locate language files in module directory.
+        With this way, each module can have own language files.
+        For instance:
+            module file path: application/addons/user/modules/sub_directory/profile.module.php
+            language files in: application/addons/user/modules/sub_directory/profile/languages/
+
+        Usage as always: $this->language()
+
+        File: tokernel.framework/base/module.class.php
+
+ Base View class library Version 2.1.0
+
+    1. Now View files can use parent addon or parent module languages.
+
+        Example with parent addon languages:
+            Addon path: application/addons/user/
+            View file path: application/addons/user/views/manage_profile.view.php
+            Languages path: application/addons/user/languages/
+
+        Example of using parent module languages:
+            Addon path: application/addons/user/
+            Module path: application/addons/user/modules/sub_directory/profile.module.php
+            View file path: application/addons/user/modules/sub_directory/profile/views/edit_profile.view.php
+            Languages path: application/addons/user/modules/sub_directory/profile/languages/
+
+        Usage as always: $this->language()
+
+    File: tokernel.framework/base/view.class.php
+
+ Addons kernel class library Version 1.1.0
+
+    1. In methods for loading Addon, Module, View - Load also language object and set to $params.
+
+    File: tokernel.framework/kernel/addons.class.php
+
+ Application core class for HTTP mode in kernel - Version 1.5.1
+
+    1. In the method allowed_languages() get allowed languages from url library, instead of configuration.
+        url library loading allowed languages automatically based on mode - frontend | backend.
+
+    2. In the method set_language() if the language prefix not allowed by url library,
+        this will trigger error.
+
+    3. New variables added into application variables to parse in output content:
+        base_backend_url : (Return base url with backend)
+        base_backend_url_lng : (Return base url with backend and language prefix)
+
+    File: tokernel.framework/kernel/app.http.class.php
+
+ Case library Version 3.2.0,
+ Cache base library Version 1.1.0,
+ File caching library Version 3.0.1,
+ New Cache headers library Version 1.0.0
+
+    1. New method config() to get configuration values of cache instance in base class.
+
+    2. New functionality to output cached content with valid headers
+        method: output_content() outpat cached content.
+        method: force_output_content() output cached content and exit the application.
+        method: output_headers() output valid headers for cache related to last modification time and expiration.
+
+    3. File caching library method write_content() do not write cache if caching is disabled.
+
+    4. Cache headers library accepts for all cached headers functionality.
+
+    Files:
+        tokernel.framework/lib/cache.lib.php
+        tokernel.framework/lib/cache/cache_base.lib.php
+        tokernel.framework/lib/cache/filecache.lib.php
+        tokernel.framework/lib/cache/cache_headers.lib.php
+
+ CSS/JS Compressor library Version 1.1.4
+
+    1. Some bugs fixed
+
+    File: tokernel.framework/lib/compress.lib.php
+
+ File processing library Version 1.4.0
+
+    1. New Method to parse formatted size to bytes
+        formatted_size_to_bytes($size)
+        i.e. 1kb -> 1024
+
+    2. New method to get actual Max file upload size calculated from PHP configuration
+        file_upload_max_size()
+
+    File: tokernel.framework/lib/file.lib.php
+
+ HTML library Version 1.3.0
+
+     1. New method to set tags to <head>
+         set_head_tag($head_tag)
+
+     2. New method to print head tags
+         print_head_tags()
+
+     File: tokernel.framework/lib/html.lib.php
+
+ Image library Version 2.0.0
+
+     This is new generation of image processing library.
+     All methods and functionality requirements comes from developers recommendations and experience.
+
+     File: tokernel.framework/lib/image.lib.php
+
+ INI Configuration files processor library Version 1.3.0
+
+    1. New method to get first items in ini file which wasn't defined in Section.
+        items_first_get()
+
+    2. New method to define if the given line is section name formatted i.e. [section_name]
+        is_section($line)
+
+    File: tokernel.framework/lib/ini.lib.php
+
+ URL class library Version 4.0.0
+
+    1. Initializing default language prefix and allowed languages by mode: frontend | backend
+
+    2. New method allowed_languages() returns allowed languages by mode: frontend | backend
+
+    File: tokernel.framework/lib/url.lib.php
+
  End of file

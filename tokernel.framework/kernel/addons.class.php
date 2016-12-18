@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.0.0
+ * @version    1.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 2.0.0
  */
@@ -240,6 +240,15 @@ class addons {
 		$params['~config'] = $this->load_config($id_addon);
 		$params['~log'] = $this->load_log($id_addon);
 		$params['~id'] = $id_addon;
+        $params['~language'] = $this->lib->language->instance(
+            $this->app->language(),
+            array(
+                TK_APP_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'languages' . TK_DS,
+                TK_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'languages' . TK_DS,
+            ),
+            'Addon: '. $id_addon,
+            true
+        );
 
 		/* Load new addon object into loaded addons array */
 		self::$loaded_addons[$id_addon] = new $addon_lib_class($params);
@@ -248,6 +257,7 @@ class addons {
 		unset($params['~config']);
 		unset($params['~log']);
 		unset($params['~id']);
+        unset($params['~language']);
 
 		tk_e::log_debug('Loaded `'.$id_addon.'` with class `'.$addon_lib_class.'` from path `' . $addon_path . '`'.
 			' with params `' . implode(', ', $params) . '`.', __CLASS__.'->'.__FUNCTION__);
@@ -536,6 +546,28 @@ class addons {
 		/* Define addon id */
 		$params['~id_addon'] = $id_addon;
 
+        $language_parent_string = 'Addon: '. $id_addon;
+
+        $language_files = array(
+            TK_APP_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'languages' . TK_DS,
+            TK_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'languages' . TK_DS,
+        );
+
+        if(!is_null($id_module)) {
+            $language_files[] = TK_APP_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'modules' . TK_DS . $id_module . TK_DS . 'languages' . TK_DS;
+            $language_files[] = TK_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'modules' . TK_DS . $id_module . TK_DS . 'languages' . TK_DS;
+            $language_parent_string .= ' Module: ' . $id_module;
+        }
+
+        $language_parent_string .= ' View: ' . $view;
+
+        $params['~language'] = $this->lib->language->instance(
+            $this->app->language(),
+            $language_files,
+            $language_parent_string,
+            true
+        );
+
 		/* Define new instance of view class */
 		$view_obj = new view($view_file, $params, $vars);
 
@@ -658,6 +690,18 @@ class addons {
 		$params['~id'] = $module_base_name;
 		$params['~id_addon'] = $id_addon;
 		$params['~parent_dir'] = $module_parent_dir;
+        $params['~language'] = $this->lib->language->instance(
+            $this->app->language(),
+            array(
+                TK_APP_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'languages' . TK_DS,
+                TK_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'languages' . TK_DS,
+
+                TK_APP_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'modules' . TK_DS . $module_parent_dir . TK_DS . $module_base_name . TK_DS . 'languages' . TK_DS,
+                TK_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'modules' . TK_DS . $module_parent_dir . TK_DS . $module_base_name . TK_DS . 'languages' . TK_DS,
+            ),
+            'Addon: '. $id_addon . ' Module: ' . $module_base_name,
+            true
+        );
 
 		/* Load new module object into loaded modules array */
 		$module = new $module_class($params);
@@ -668,6 +712,7 @@ class addons {
 		unset($params['~id']);
 		unset($params['~id_addon']);
 		unset($params['~parent_dir']);
+        unset($params['~language']);
 
 		/* Module loaded as singleton and will be appended to loaded modules array */
 		if($clone == false) {

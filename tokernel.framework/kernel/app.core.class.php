@@ -190,8 +190,7 @@ abstract class app_core {
     		
     		tk_e::log_debug('HTTP mode not allowed', 'app::' . __FUNCTION__);
     		
-    		throw new tk_e('toKernel - Universal PHP Framework v' . TK_VERSION 
-    						. '. HTTP mode not allowed.', E_USER_ERROR);
+    		throw new tk_e('toKernel - Universal PHP Framework v' . TK_VERSION . '. HTTP mode not allowed.', E_USER_ERROR);
     						
     	}
     	
@@ -200,8 +199,7 @@ abstract class app_core {
 			
     		tk_e::log_debug('Cleaning $GLOBALS', 'app::' . __FUNCTION__);
     		
-    		self::$instance->lib->filter->clean_globals(self::$instance->
-						config->item_get('auto_clean_globals_xss', 'HTTP'));
+    		self::$instance->lib->filter->clean_globals(self::$instance->config->item_get('auto_clean_globals_xss', 'HTTP'));
 		}
 
 		/* Clean url by configuration, before initialize */
@@ -209,8 +207,7 @@ abstract class app_core {
 			
 			tk_e::log_debug('Cleaning URL', 'app::' . __FUNCTION__);
 			
-			self::$instance->lib->filter->clean_url(self::$instance->config->
-											item_get('http_get_var', 'HTTP'));
+			self::$instance->lib->filter->clean_url(self::$instance->config->item_get('http_get_var', 'HTTP'));
 		}
 		
 		/* Initialize (parse) url */

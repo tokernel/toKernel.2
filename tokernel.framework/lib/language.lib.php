@@ -208,8 +208,7 @@ class language_lib {
  		
  		// Return item if exists from custom file
 		if($this->languages[$this->prefix . '_' . $path]->item_exists($item)) {
-			$return_val = $this->languages[$this->prefix . '_' . 
-													$path]->item_get($item);
+			$return_val = $this->languages[$this->prefix . '_' . $path]->item_get($item);
 			break;
  		}
  		

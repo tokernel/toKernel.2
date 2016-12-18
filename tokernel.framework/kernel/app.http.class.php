@@ -25,7 +25,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.5.0
+ * @version    1.5.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -107,8 +107,7 @@ class app extends app_core {
 
  	/* Calling this function second time will trigger error. */
  	if(self::$runned) {
-	   trigger_error('Application is already runned. '.__CLASS__.'::'.
-	                  __FUNCTION__.'()', E_USER_ERROR);
+	   trigger_error('Application is already runned. '.__CLASS__.'::'. __FUNCTION__.'()', E_USER_ERROR);
 	}
 	 
 	tk_e::log_debug('Start', 'app->'.__FUNCTION__);
@@ -202,12 +201,8 @@ class app extends app_core {
 	$addon_exists = $this->addons->exist($id_addon);
 
 	if($addon_exists == false and $id_addon == $this->config->item_get('default_callable_addon', 'HTTP')) {
-		
-		tk_e::log_debug('End. Default callable addon not exists.', 
-									'app->'.__FUNCTION__);
-			
-		tk_e::error(E_USER_ERROR, 'Default callable addon not exists.', 
-									__FILE__, __LINE__);
+		tk_e::log_debug('End. Default callable addon not exists.', 'app->'.__FUNCTION__);
+		tk_e::error(E_USER_ERROR, 'Default callable addon not exists.', __FILE__, __LINE__);
 	}
 	
 	/* Check, if the callable addon not exists */
@@ -325,8 +320,7 @@ class app extends app_core {
 		
 		$to_cache_content = self::$output_buffer;
 		
-		$this->lib->cache->write_content($this->lib->url->url(true, true, true), 
-											$to_cache_content, $ce_);
+		$this->lib->cache->write_content($this->lib->url->url(true, true, true), $to_cache_content, $ce_);
 											
 	} // end checking cache_expiration
 	
@@ -657,14 +651,9 @@ class app extends app_core {
  * @return array
  */
  public function allowed_languages($lp = NULL) {
- 	
- 	$a_languages = explode('|' , 
- 							$this->config->item_get('http_allowed_languages', 
- 													'HTTP'));
- 	if(!is_array($a_languages)) {
- 		return false;
- 	}
- 	
+
+    $a_languages = $this->lib->url->allowed_languages();
+
  	$tk_lng_ref_file = TK_PATH . 'config' . TK_DS . 'languages.ini';
  	$app_lng_ref_file = TK_APP_PATH . 'config' . TK_DS . 'languages.ini';
  	
@@ -687,6 +676,7 @@ class app extends app_core {
  	
  	unset($lng_ref);
  	unset($a_languages);
+
  	return $languages;
  	
  } // end func allowed_languages
@@ -701,26 +691,22 @@ class app extends app_core {
  public function set_language($lp) {
  	
  	if(!isset(self::$instance)) {
- 		trigger_error('Application instance is empty ('.__CLASS__.')', 
-	              E_USER_ERROR );
+ 		trigger_error('Application instance is empty ('.__CLASS__.')', E_USER_ERROR );
  	}
- 	
- 	/* Check is language prefix enabled*/
- 	if(!in_array($lp, explode('|', $this->config->item_get('http_allowed_languages', 'HTTP')))) {
-			
-		$lp = $this->config->item_get('http_default_language', 'HTTP'); 
-	}
- 	
- 	$this->lib->url->set_language_prefix($lp);
+
+ 	if(!$this->lib->url->set_language_prefix($lp)) {
+        trigger_error('Trying to set not allowed language prefix `'.$lp.'`.', E_USER_ERROR );
+    }
  	
  	/* Load language object for application */
 	self::$instance->language = self::$instance->lib->language->instance(
-    					$lp,
-     					array(
-					        TK_APP_PATH . 'languages/',
-     						TK_PATH . 'languages/', 
-     					),
-     					true);
+        $lp,
+        array(
+		    TK_APP_PATH . 'languages/',
+     		TK_PATH . 'languages/',
+     	),
+     	true
+    );
 
  } // end func set_language
 
@@ -848,6 +834,8 @@ class app extends app_core {
 	 /* Set application global variables to use in templates and view files */
 	 $this->variables['base_url'] = $this->lib->url->base_url();
 	 $this->variables['base_url_lng'] = $this->lib->url->base_url() . '/' . $this->language();
+     $this->variables['base_backend_url'] = $this->lib->url->base_url() . '/' . $this->config->item_get('backend_dir', 'HTTP');
+     $this->variables['base_backend_url_lng'] = $this->lib->url->base_url() . '/' . $this->config->item_get('backend_dir', 'HTTP') . '/' . $this->language();
 	 $this->variables['app_url'] = $this->app_url();
 	 $this->variables['theme_name'] = $this->theme_name();
 	 $this->variables['theme_url'] = $this->theme_url();

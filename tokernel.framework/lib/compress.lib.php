@@ -28,7 +28,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.1.0
+ * @version    1.1.4
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.6.0
  */
@@ -72,6 +72,9 @@ class compress_lib {
 
 	/**
 	 * Compress javascript content
+     *
+     * Due to an issues with preg_replace() function in WinX OS,
+     * which causes segmentation fault, this is method compresses javascript code more accurate.
 	 *
 	 * @access public
 	 * @param string $buffer
@@ -79,21 +82,84 @@ class compress_lib {
 	 */
 	public function javascript($buffer) {
 
-		/* remove comments */
-		$buffer = preg_replace("/((?:\/\*(?:[^*]|(?:\*+[^*\/]))*\*+\/)|(?:\/\/.*))/", '', $buffer);
+        // Temporary replace HTTP:// and HTTPS:// with other chars
+        $buffer = str_replace('http://', 'http:@@', $buffer);
+        $buffer = str_replace('https://', 'http:^^', $buffer);
 
-		/* remove tabs, spaces, new lines, etc. */
-		$buffer = str_replace(array("\r\n","\r","\t","\n",'  ','    ','     '), '', $buffer);
+        // Remove comment blocks
+        while($clean_buffer = $this->remove_first_js_comments_block($buffer)) {
+            $buffer = $clean_buffer;
+        }
 
-		/* remove other spaces before/after ) */
-		$buffer = preg_replace(array('(( )+\))','(\)( )+)'), ')', $buffer);
+        $lines = explode("\n", $buffer);
 
-		$buffer = trim($buffer);
-		$buffer = rtrim($buffer, ';') . ';';
+        if(empty($lines)) {
+            return '';
+        }
+
+        $new_buffer = '';
+
+        // Remove line comments
+        foreach($lines as $line) {
+
+            $com_pos = strpos($line, "//");
+
+            if($com_pos !== false) {
+                $line = substr($line, 0, $com_pos);
+            }
+
+            $line = trim($line);
+
+            if($line != '') {
+                $new_buffer .= $line;
+            }
+
+        }
+
+        $buffer = $new_buffer;
+
+        // Remove tabs, new lines
+        $buffer = str_replace("\t", '', $buffer);
+        $buffer = str_replace(' = ', '=', $buffer);
+
+        // Restore HTTP:// and HTTPS://
+        $buffer = str_replace('http:@@', 'http://', $buffer);
+        $buffer = str_replace('http:^^', 'https://', $buffer);
 
 		return $buffer;
 
 	} // End func javascript
+
+    /**
+     * Remove first Javascript comment block
+     *
+     * @param string $buffer
+     * @return mixed bool | string
+     */
+    protected function remove_first_js_comments_block($buffer) {
+
+        $first_pos = strpos($buffer, '/*');
+
+        if($first_pos === false) {
+            return false;
+        }
+
+        $next_pos = strpos($buffer, '*/');
+
+        if($next_pos === false) {
+            return false;
+        }
+
+        $next_pos = $next_pos - $first_pos;
+        $next_pos += 2;
+
+        $str_to_replace = substr($buffer, $first_pos, $next_pos);
+
+        $buffer = str_replace($str_to_replace, '', $buffer);
+
+        return $buffer;
+
+    } // End func remove_first_js_comments_block
 
 	/**
 	 * Compress css content
@@ -132,46 +198,47 @@ class compress_lib {
 	 */
 	public function file($source_file, $destination_file = NULL) {
 
-		$content = '';
+        // Detect type
+        $type = $this->lib->file->ext(basename($source_file));
 
-		if(substr($source_file, 0, 2) == '//' or substr($source_file, 0, 4) == 'http') {
-			$content .= $this->remote_file($source_file);
-		} else {
+        $content = '';
 
-			// Detect type
-			$type = $this->lib->file->ext($source_file);
+        if(substr($source_file, 0, 2) == '//' or substr($source_file, 0, 4) == 'http') {
+            $content .= $this->remote_file($source_file);
+        } else {
 
-			// Check if type allowed
-			if(!in_array($type, $this->file_types)) {
-				trigger_error('Invalid file type: ' . $type . '(File: ' . $source_file . ')', E_USER_ERROR);
-			}
+            // Check if type allowed
+            if(!in_array($type, $this->file_types)) {
+                trigger_error('Invalid file type: ' . $type . '(File: ' . $source_file . ')', E_USER_ERROR);
+            }
 
-			// Check file
-			if(!is_readable($source_file) or !is_file($source_file)) {
-				trigger_error("File: " . $source_file . " doesn't exists!", E_USER_ERROR);
-			}
+            // Check file
+            if(!is_readable($source_file) or !is_file($source_file)) {
+                trigger_error("File: " . $source_file . " doesn't exists!", E_USER_ERROR);
+            }
 
-			// Load content
-			$content .= $this->lib->file->read($source_file);
-		}
+            // Load content
+            $content .= $this->lib->file->read($source_file);
 
-		// Compress by type
-		if($type == 'js') {
-			$content = $this->javascript($content);
-		}
+        }
 
-		if($type == 'css') {
-			$content = $this->css($content);
-		}
+        // Compress by type
+        if($type == 'js') {
+            $content = $this->javascript($content);
+        }
 
-		// Save to file if specified
-		if(!is_null($destination_file)) {
-			$this->lib->file->write($destination_file, $content);
-			return true;
-		}
+        if($type == 'css') {
+            $content = $this->css($content);
+        }
 
-		// Return content
-		return $content;
+        // Save to file if specified
+        if(!is_null($destination_file)) {
+            $this->lib->file->write($destination_file, $content);
+            return true;
+        }
+
+        // Return content
+        return $content;
 
 	} // End func file
 
@@ -207,6 +274,8 @@ class compress_lib {
 			if($do_compress == true) {
 				$content .= $this->file($source_file);
 			} else {
+
+                $content .= "\n";
 
 				if(substr($source_file, 0, 2) == '//' or substr($source_file, 0, 4) == 'http') {
 					$content .= $this->remote_file($source_file);

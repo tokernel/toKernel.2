@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.0.0
+ * @version    1.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 2.0.0
  */
@@ -57,7 +57,16 @@ defined('TK_EXEC') or die('Restricted area.');
 	  */
 	 protected $app;
 
-	/**
+     /**
+      * Cache headers library object
+      *
+      * @var object
+      * @access protected
+      * @since v.1.1.0
+      */
+     protected $headers;
+
+     /**
 	 * Default configuration
 	 *
 	 * @access protected
@@ -86,6 +95,9 @@ defined('TK_EXEC') or die('Restricted area.');
 
 		// Set configuration
 		$this->config = array_merge($this->config, $config);
+
+        // Define Cache headers library object
+        $this->headers = new cache_headers_lib();
 
 	} // End func __construct
 
@@ -166,6 +178,108 @@ defined('TK_EXEC') or die('Restricted area.');
 	 * @since 1.0.0
 	 */
     abstract public function stats();
+
+    /**
+     * Get configuration items
+     *
+     * @access public
+     * @param string $item
+     * @return string
+     * @since version 1.1.0
+     */
+     public function config($item) {
+
+         if(isset($this->config[$item])) {
+             return $this->config[$item];
+         }
+
+         return false;
+
+     }
+
+     /**
+      * Output Cache with valid headers
+      *
+      * @access public
+      * @param string $id
+      * @param array $replacements
+      * @return bool
+      * @since v.1.1.0
+      */
+     public function output_content($id, $replacements = array()) {
+
+         $cache_expiration = $this->config('cache_expiration');
+
+         /* Define Headers max-age */
+         if($cache_expiration == '-1') {
+             $max_age = strtotime('+5 year');
+         } elseif($cache_expiration == '0') {
+             $max_age = strtotime('-1 day');
+         } else {
+             $max_age = strtotime('+' . $cache_expiration . ' minutes');
+         }
+
+         $content = $this->get_content($id);
+
+         /* Cache expired. Initializing headers */
+         if(!$content) {
+             $last_modified = time();
+             $this->output_headers($last_modified, $max_age);
+             return false;
+         }
+
+         /* Replace possible values in cached content */
+         if(!empty($replacements)) {
+             foreach($replacements as $item => $value) {
+                 $item = '{var.'.$item.'}';
+                 $content = str_replace($item, $value, $content);
+             }
+         }
+
+         /* Initializing headers */
+         $last_modified = time() - $max_age;
+         $this->output_headers($last_modified, $max_age);
+
+         /* Outputting content end exiting */
+         echo $content;
+
+         return true;
+
+     } // End func output_content
+
+     /**
+      * Output Cache with valid headers and exit.
+      *
+      * @access public
+      * @param string $id
+      * @param array $replacements
+      * @return bool
+      * @since v.1.1.0
+      */
+     public function force_output_content($id, $replacements = array()) {
+
+         if($this->output_content($id, $replacements)) {
+             exit();
+         }
+
+         return false;
+
+     } // End func force_output_content
+
+     /**
+      * Output headers
+      *
+      * @access public
+      * @param int $last_modified
+      * @param int $max_age
+      * @return void
+      * @since v.1.1.0
+      */
+     public function output_headers($last_modified, $max_age) {
+
+         $this->headers->output($last_modified, $max_age);
+
+     } // End func output_headers
 
 } // End class cache_base_lib
 

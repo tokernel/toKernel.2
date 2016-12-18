@@ -2,7 +2,7 @@
 /**
  * toKernel - Universal PHP Framework.
  * Base module class for modules.
- * 
+ *
  * This file is part of toKernel.
  *
  * toKernel is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    3.0.0
+ * @version    3.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -39,297 +39,326 @@ defined('TK_EXEC') or die('Restricted area.');
  */
 class module {
 
-/**
- * Status of module
- * 
- * @access protected
- * @staticvar bool 
- */	
- protected static $initialized;
-   
-/**
- * Library object for working with 
- * libraries in this class
- * 
- * @var object
- * @access protected
- */ 
- protected $lib;
- 
-/**
- * Application object for accessing 
- * aplication functions in this class
- * 
- * @var object
- * @access protected
- */ 
- protected $app;
+    /**
+     * Status of module
+     *
+     * @access protected
+     * @staticvar bool
+     */
+    protected static $initialized;
 
-/**
- * Main Addons object for accessing all addons
- *
- * @var object
- * @access protected
- */
- protected $addons;
+    /**
+     * Library object for working with
+     * libraries in this class
+     *
+     * @var object
+     * @access protected
+     */
+    protected $lib;
 
-/**
- * This module id
- * 
- * @access protected
- * @var string
- */
- protected $id; 
- 
-/**
- * Addon id
- * 
- * @access protected
- * @var string
- */
- protected $id_addon;
+    /**
+     * Application object for accessing
+     * aplication functions in this class
+     *
+     * @var object
+     * @access protected
+     */
+    protected $app;
 
-/**
- * Addon configuration object
- * 
- * @access protected
- * @var object
- */ 
- protected $config;
-  
-/**
- * Addon log instance
- * 
- * @var object
- * @access protected
- */ 
- protected $log; 
+    /**
+     * Main Addons object for accessing all addons
+     *
+     * @var object
+     * @access protected
+     */
+    protected $addons;
 
-/**
- * Module params
- *
- * @access protected
- * @var array
- */
- protected $params = array();
+    /**
+     * This module id
+     *
+     * @access protected
+     * @var string
+     */
+    protected $id;
 
-/**
- * Parent directory of module
- *
- * @var string
- */
- protected $parent_dir = '';
-  
-/**
- * Class Constructor
- * 
- * @access public
- * @param array $params
- * @return void
- */
- public function __construct($params = array()) {
+    /**
+     * Addon id
+     *
+     * @access protected
+     * @var string
+     */
+    protected $id_addon;
 
-	// Load main objects
-	$this->lib = lib::instance();
-	$this->app = app::instance();
-	$this->addons = addons::instance();
+    /**
+     * Addon configuration object
+     *
+     * @access protected
+     * @var object
+     */
+    protected $config;
 
-	// Define configuration object
-	$this->config = $params['~config'];
+    /**
+     * Addon log instance
+     *
+     * @var object
+     * @access protected
+     */
+    protected $log;
 
-	// Define Addon's log object
-	$this->log = $params['~log'];
+    /**
+     * Addon language
+     *
+     * @access protected
+     * @var object
+     */
+    protected $language;
 
-	// Define Module, Addon id
-	$this->id = $params['~id'];
-	$this->id_addon = $params['~id_addon'];
+    /**
+     * Module params
+     *
+     * @access protected
+     * @var array
+     */
+    protected $params = array();
 
-	// Define parent directory path.
-	if($params['~parent_dir'] != '') {
-	    $this->parent_dir = $params['~parent_dir'] . TK_DS;
-	}
+    /**
+     * Parent directory of module
+     *
+     * @var string
+     */
+    protected $parent_dir = '';
 
-	// Unset temporary value
-	unset($params['~config']);
-	unset($params['~log']);
-	unset($params['~id']);
-	unset($params['~id_addon']);
-	unset($params['~parent_dir']);
+    /**
+     * Class Constructor
+     *
+     * @access public
+     * @param array $params
+     * @return void
+     */
+    public function __construct($params = array()) {
 
-	// Set module params
-	$this->params = $params;
+        // Load main objects
+        $this->lib = lib::instance();
+        $this->app = app::instance();
+        $this->addons = addons::instance();
 
-	// Initialized
-	self::$initialized = true;
+        // Define configuration object
+        $this->config = $params['~config'];
 
- } // End constructor
+        // Define Addon's log object
+        $this->log = $params['~log'];
 
-/**
- * Return parent directory of module
- *
- * @access protected
- * @return mixed
- */
- protected function get_parent_dir() {
-	$rc = new ReflectionClass(get_class($this));
-    return basename(dirname($rc->getFileName()));
- }
+        // Define Module, Addon id
+        $this->id = $params['~id'];
+        $this->id_addon = $params['~id_addon'];
 
-/**
- * Return parent addon object of module
- *
- * @access public
- * @return mixed
- */
- public function addon() {
-	$parent_addon = $this->id_addon;
-	return $this->addons->$parent_addon;
- }
+        // Define parent directory path.
+        if($params['~parent_dir'] != '') {
+            $this->parent_dir = $params['~parent_dir'] . TK_DS;
+        }
 
-/**
- * Load module by parent addon object
- * 
- * @final
- * @access public
- * @param string $id_module
- * @param array $params
- * @param bool $clone
- * @return object loaded module
- */
- final public function load_module($id_module, $params = array(), $clone = false) {
-	return $this->addons->load_module($this->id_addon, $id_module, $params, $clone);
- }
+        $this->language = $params['~language'];
 
-/**
- * Load model by parent addon object
- *
- * @final
- * @access public
- * @param string $id_model
- * @param mixed $instance
- * @param bool $clone
- * @return object loaded model
- */
- final public function load_model($id_model, $instance = NULL, $clone = false) {
-	return $this->addons->load_model($this->id_addon, $id_model, $instance, $clone);
- }
+        // Unset temporary value
+        unset($params['~config']);
+        unset($params['~log']);
+        unset($params['~id']);
+        unset($params['~id_addon']);
+        unset($params['~parent_dir']);
+        unset($params['~language']);
 
-/**
- * Load view file for module and return `view` object.
- * Include view file from application dir if exists, 
- * else include from framework dir. 
- * Return false, if view file not exists. 
- *
- * @final
- * @access public
- * @param string $file
- * @param array $vars = array()
- * @return mixed string | false
- * @since 2.1.0
- */
- final public function load_view($file, $vars = array()) {
+        // Set module params
+        $this->params = $params;
 
-	$module_dir = $this->parent_dir . $this->id;
-	return $this->addons->load_view($this->id_addon, $module_dir, $file, $vars);
+        // Initialized
+        self::$initialized = true;
 
- } // end func load_view
+    } // End constructor
 
-/**
- * Return true if addon called from backend url or 
- * backend_dir is empty (not set) in configuration. 
- * Else, redirect to error_404  
- * 
- * @access public
- * @return bool
- * @since 2.3.0
- */
- public function check_backend() {
- 	
- 	if($this->app->config('backend_dir', 'HTTP') != $this->lib->url->backend_dir()) {
- 		$this->app->error_404('Cannot call method of class `' . get_class($this) . '` by this url.');
- 		return false;
- 	}
- 	
- 	return true;
+    /**
+     * Class destructor
+     *
+     * @access public
+     * @return void
+     */
+    public function __destruct() {
 
- } // End func check_backend
- 
-/**
- * Return addon configuration values
- * 
- * @final
- * @access public
- * @param string $item
- * @param string $section
- * @return mixed
- */
- final public function config($item, $section = NULL) {
-	return $this->config->item_get($item, $section);
- } // end func config
+        unset($this->config);
+        unset($this->log);
+        unset($this->id);
+        unset($this->id_addon);
+        unset($this->parent_dir);
+        unset($this->params);
+        unset($this->language);
 
-/**
- * Return addon id of this module
- * 
- * @access public
- * @return string
- */
- public function id_addon() {
-	return $this->id_addon;
- }
- 
-/**
- * Get language value by expression
- * Return language prefix if item is null.
- *
- * NOTE: From toKernel version 2.0.0 Languages supported only by application.
- * Modules not supporting own language files.
- *
- * @final
- * @access public
- * @param string $item
- * @return string
- */ 
- final public function language($item = NULL) {
- 	
- 	if(is_null($item)) {
- 		return $this->app->language();
- 	}
- 	
- 	if(func_num_args() > 1) {
- 		$l_args = func_get_args();
- 	
- 		unset($l_args[0]);
- 		
- 		if(is_array($l_args[1])) {
- 			$l_args = $l_args[1];
- 		}
- 		
- 		return $this->app->language($item, $l_args);
- 	}
- 	
- 	return $this->app->language($item);
- 	
- } // end func language
+    } // end destructor
 
- /**
-  * Return module param by key
-  *
-  * @access public
-  * @param string $key
-  * @return mixed
-  * @since  3.0.0
-  */
-  public function param($key) {
+    /**
+     * Return parent directory of module
+     *
+     * @access protected
+     * @return mixed
+     */
+    protected function get_parent_dir() {
+        $rc = new ReflectionClass(get_class($this));
+        return basename(dirname($rc->getFileName()));
+    }
 
-	if(!isset($this->params[$key])) {
-		return false;
-	}
+    /**
+     * Return parent addon object of module
+     *
+     * @access public
+     * @return mixed
+     */
+    public function addon() {
+        $parent_addon = $this->id_addon;
+        return $this->addons->$parent_addon;
+    }
 
-	return $this->params[$key];
+    /**
+     * Load module by parent addon object
+     *
+     * @final
+     * @access public
+     * @param string $id_module
+     * @param array $params
+     * @param bool $clone
+     * @return object loaded module
+     */
+    final public function load_module($id_module, $params = array(), $clone = false) {
+        return $this->addons->load_module($this->id_addon, $id_module, $params, $clone);
+    }
 
- } // end func param
-  
-/* End of class module */
+    /**
+     * Load model by parent addon object
+     *
+     * @final
+     * @access public
+     * @param string $id_model
+     * @param mixed $instance
+     * @param bool $clone
+     * @return object loaded model
+     */
+    final public function load_model($id_model, $instance = NULL, $clone = false) {
+        return $this->addons->load_model($this->id_addon, $id_model, $instance, $clone);
+    }
+
+    /**
+     * Load view file for module and return `view` object.
+     * Include view file from application dir if exists,
+     * else include from framework dir.
+     * Return false, if view file not exists.
+     *
+     * @final
+     * @access public
+     * @param string $file
+     * @param array $vars = array()
+     * @return mixed string | false
+     * @since 2.1.0
+     */
+    final public function load_view($file, $vars = array()) {
+
+        $module_dir = $this->parent_dir . $this->id;
+        return $this->addons->load_view($this->id_addon, $module_dir, $file, $vars);
+
+    } // end func load_view
+
+    /**
+     * Return true if addon called from backend url or
+     * backend_dir is empty (not set) in configuration.
+     * Else, redirect to error_404
+     *
+     * @access public
+     * @return bool
+     * @since 2.3.0
+     */
+    public function check_backend() {
+
+        if($this->app->config('backend_dir', 'HTTP') != $this->lib->url->backend_dir()) {
+            $this->app->error_404('Cannot call method of class `' . get_class($this) . '` by this url.');
+            return false;
+        }
+
+        return true;
+
+    } // End func check_backend
+
+    /**
+     * Return addon configuration values
+     *
+     * @final
+     * @access public
+     * @param string $item
+     * @param string $section
+     * @return mixed
+     */
+    final public function config($item, $section = NULL) {
+        return $this->config->item_get($item, $section);
+    } // end func config
+
+    /**
+     * Return addon id of this module
+     *
+     * @access public
+     * @return string
+     */
+    public function id_addon() {
+        return $this->id_addon;
+    }
+
+    /**
+     * Get language value by expression
+     * Return language prefix if item is null.
+     *
+     * NOTE: From toKernel version 2.0.0 Languages supported only by application.
+     * Modules not supporting own language files.
+     *
+     * @final
+     * @access public
+     * @param string $item
+     * @return string
+     */
+    final public function language($item = NULL) {
+
+        if(is_null($item)) {
+            return $this->app->language();
+        }
+
+        if(func_num_args() > 1) {
+            $l_args = func_get_args();
+
+            unset($l_args[0]);
+
+            if(is_array($l_args[1])) {
+                $l_args = $l_args[1];
+            }
+
+            return $this->language->get($item, $l_args);
+        }
+
+        return $this->language->get($item);
+
+    } // end func language
+
+    /**
+     * Return module param by key
+     *
+     * @access public
+     * @param string $key
+     * @return mixed
+     * @since  3.0.0
+     */
+    public function param($key) {
+
+        if(!isset($this->params[$key])) {
+            return false;
+        }
+
+        return $this->params[$key];
+
+    } // end func param
+
+    /* End of class module */
 }
 
 /* End of file */

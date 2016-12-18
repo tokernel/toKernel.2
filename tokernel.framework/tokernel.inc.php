@@ -243,6 +243,11 @@ require_once(TK_PATH . 'base' . TK_DS . 'model.class.php');
 /* Include parent view class */
 require_once(TK_PATH . 'base' . TK_DS . 'view.class.php');
 
+/* Application base classes */
+
+/* Include base module */
+require_once(TK_APP_PATH . 'base' . TK_DS . 'base_module.class.php');
+
 /**
  * Include all Base files from application/base/*
  */

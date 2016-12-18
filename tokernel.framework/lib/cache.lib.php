@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    3.1.0
+ * @version    3.2.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -122,6 +122,17 @@ class cache_lib {
 		} else {
 			require_once ($tk_cache_lib_path);
 		}
+
+        // Define cache headers lib file path
+        $app_base_cache_headers_lib_path = TK_APP_PATH . 'lib' . TK_DS . 'cache' . TK_DS . 'cache_headers.lib.php';
+        $tk_base_cache_headers_lib_path = TK_PATH . 'lib' . TK_DS . 'cache' . TK_DS . 'cache_headers.lib.php';
+
+        // Include Cache headers library
+        if(file_exists($app_base_cache_headers_lib_path)) {
+            require_once ($app_base_cache_headers_lib_path);
+        } else {
+            require_once ($tk_base_cache_headers_lib_path);
+        }
 
 		// Define configuration array
 		$config_arr = $config_ini_obj->section_get($config_section_name);

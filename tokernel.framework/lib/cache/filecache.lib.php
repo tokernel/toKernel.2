@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    3.0.0
+ * @version    3.0.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 2.0.0
  */
@@ -145,6 +145,11 @@ class filecache_lib extends cache_base_lib {
  * @return bool
  */ 
  public function write_content($file_id, $buffer, $minutes = NULL) {
+
+    /* If caching disabled, than return false */
+    if($this->config['cache_expiration'] == 0) {
+        return false;
+    }
 
  	/* Set cache file path/name with extension */
 	$file = $this->filename($file_id);

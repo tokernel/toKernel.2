@@ -22,9 +22,9 @@
  * @package    framework
  * @subpackage library
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    2.0.0
+ * @version    2.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 2.0.0
  */
@@ -89,7 +89,8 @@ class pagination_lib {
 	    'go_last_tag' => '<li class="{var.item_class}"><a href="{var.url}" class="{var.paging_item_class}" data-number="{var.number}"><i class="fa fa-angle-right"></i><i class="fa fa-angle-right"></i></a></li>',
 	    'paging_item_class' => 'paging_item',
 	    'active_item_class' => 'active',
-	    'disabled_item_class' => 'disabled'
+	    'disabled_item_class' => 'disabled',
+        'offset_var' => '{var.offset}'
     );
 
 	if(!is_null($config_arr)) {
@@ -188,7 +189,7 @@ class pagination_lib {
 		$number = 1;
 
 		if($url != '#') {
-			$url .= '/' . $number;
+            $url = $this->num_to_url($url, $number);
 		}
 
 		$go_first_tag = str_replace('{var.url}', $url, $go_first_tag);
@@ -212,7 +213,7 @@ class pagination_lib {
 	}
 
 	if($url != '#') {
-		 $url .= '/' . $number;
+        $url = $this->num_to_url($url, $number);
 	}
 
 	$go_prev_tag = str_replace('{var.url}', $url, $go_prev_tag);
@@ -290,7 +291,7 @@ class pagination_lib {
 	}
 
 	if($url != '#') {
-		 $url .= '/' . $number;
+        $url = $this->num_to_url($url, $number);
 	}
 
 	$go_next_tag = str_replace('{var.url}', $url, $go_next_tag);
@@ -309,7 +310,7 @@ class pagination_lib {
 		$number = $pages_count;
 
 		if($url != '#') {
-			$url .= '/' . $number;
+            $url = $this->num_to_url($url, $number);
 		}
 
 		$go_last_tag = str_replace('{var.url}', $url, $go_last_tag);
@@ -349,7 +350,7 @@ class pagination_lib {
 
 		 $url = $base_url;
 		 if($url != '#') {
-			 $url .= '/' . $i;
+		     $url = $this->num_to_url($url, $i);
 		 }
 
 		 $num_tag = $this->config['number_tag'];
@@ -363,6 +364,31 @@ class pagination_lib {
 	 return $buffer;
 
  } // End func number_tag
+
+/**
+ * Add page number to URL
+ * If {var.offset} specified in url, it will be replaced to number
+ * i.e. http://example.com/news/{var.offset}/something-else/here
+ * will replace the {var.offset} to page number
+ *
+ * Else the number will be added to end of the url
+ *
+ * @access protected
+ * @param string $url
+ * @param int $number
+ * @return string
+ */
+protected function num_to_url($url, $number) {
+
+    if(strpos($url, $this->config['offset_var']) !== false) {
+        $url = str_replace($this->config['offset_var'], $number, $url);
+    } else {
+        $url .= '/' . $number;
+    }
+
+    return $url;
+}
+
 
 /* End of class pagination_lib */
 }

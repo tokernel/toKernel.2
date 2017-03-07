@@ -25,7 +25,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    2.0.0
+ * @version    2.0.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -80,7 +80,7 @@ defined('TK_EXEC') or die('Restricted area.');
     ob_clean();
     
     if(!headers_sent()) {
-    	header('HTTP/1.0 500 Internal Server Error', true, 500);
+    	header('HTTP/1.1 500 Internal Server Error', true, 500);
 	}
     		
     $err_tpl_file = self::get_error_template_file($error_group);

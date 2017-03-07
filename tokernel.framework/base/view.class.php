@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    2.1.0
+ * @version    2.1.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -208,6 +208,7 @@ class view {
         if(isset($this->variables[$var])) {
             return $this->variables[$var];
         } else {
+            trigger_error('Undefined item `' . $var . '` in view object!`', E_USER_NOTICE);
             return NULL;
         }
     } // end func __get
@@ -323,7 +324,7 @@ class view {
         if(isset($this->variables[$var_name])) {
             return $this->variables[$var_name];
         } else {
-            return false;
+            return NULL;
         }
 
     } // end func get_var

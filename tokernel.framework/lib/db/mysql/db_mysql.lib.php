@@ -553,7 +553,7 @@ class db_mysql_lib extends db_base_lib {
 	// Check connection
 	$this->connect();
 
-	$result =  mysqli_commit($this->conn);
+	$result = mysqli_commit($this->conn);
 
 	if(!$result) {
 		$this->error = mysqli_error($this->conn);

@@ -125,7 +125,7 @@ class addons {
 	 * @return void
 	 */
 	public function __clone() {
-		trigger_error( 'Cloning the object is not permitted ('.__CLASS__.')', E_USER_ERROR );
+		trigger_error( 'Cloning the object is not permitted ('.__CLASS__.')', E_USER_ERROR);
 	}
 
 	/**

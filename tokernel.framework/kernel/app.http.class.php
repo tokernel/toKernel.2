@@ -23,9 +23,9 @@
  * @package    framework
  * @subpackage kernel
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.5.1
+ * @version    1.5.2
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -131,23 +131,26 @@ class app extends app_core {
 	}
 
 	/* 
-	 * Load content from cache if request method is not POST.
-	 * To disable caching, set cache_expiration to 0 
-	 * in application configuration file. the value -1 assumes
-	 * that the cache will never expire.
+	 * Load page content from cache if the cache configured
+	 * and the request method is not "Post"
+	 *
+	 * To disable caching, set cache_expiration to 0
+	 * in application/config/caching.ini
+	 * where the default configuration section is [tokernel_default]
+	 * the value -1 assume that the cache will never expire.
 	 */
-	$ce_ = $this->config->item_get('cache_expiration', 'CACHING');
-	
-	if(($ce_ > 0 or $ce_ == '-1') and $_SERVER['REQUEST_METHOD'] == 'GET') {
+	$cache = $this->lib->cache->instance();
+	$ce_ = $cache->config('cache_expiration');
+
+	if(($ce_ > 0 or $ce_ == '-1') and $this->lib->filter->server('REQUEST_METHOD') == 'GET') {
 		
 		tk_e::log_debug('Trying to load content from cache', 'app->'.__FUNCTION__);
 							
 		/* 
-		 * Get cache content from application cache directory.
-		 * Note: Function 'cache_get_content' will return false, 
-		 * if cached file exist but cache expired.  
+		 * Trying to get cached content.
+		 * Will return false if cache expired or not exists.
 		 */
-		$cached_content = $this->lib->cache->get_content($this->lib->url->url(true, true, true), $ce_);
+		$cached_content = $cache->get_content($this->lib->url->url(true, true, true), $ce_);
 		
         /* 
          * Cached content is not empty.
@@ -197,7 +200,7 @@ class app extends app_core {
 	/* Set id_addon for load */
 	$id_addon = $this->lib->url->addon();
 
-	/* Check, if the default calable addon not exists */
+	/* Check, if the default callable addon not exists */
 	$addon_exists = $this->addons->exist($id_addon);
 
 	if($addon_exists == false and $id_addon == $this->config->item_get('default_callable_addon', 'HTTP')) {
@@ -313,14 +316,13 @@ class app extends app_core {
 	/* 
 	 * Try to write content to cache.
 	 */
-	if(($ce_ > 0 or $ce_ == '-1') and $_SERVER['REQUEST_METHOD'] == 'GET') {
+	if(($ce_ > 0 or $ce_ == '-1') and $this->lib->filter->server('REQUEST_METHOD') == 'GET') {
 
-		tk_e::log_debug('Trying to write content to chache.', 
-							'app->'.__FUNCTION__);
+		tk_e::log_debug('Trying to write content to chache.', 'app->'.__FUNCTION__);
 		
 		$to_cache_content = self::$output_buffer;
 		
-		$this->lib->cache->write_content($this->lib->url->url(true, true, true), $to_cache_content, $ce_);
+		$cache->write_content($this->lib->url->url(true, true, true), $to_cache_content, $ce_);
 											
 	} // end checking cache_expiration
 	
@@ -487,7 +489,7 @@ class app extends app_core {
 		tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->lib->url->query_string() . '"',	'app->'.__FUNCTION__);
 		tk_e::log_debug('', ':============= END WITH ERROR 404 ==============');
 
-		header('HTTP/1.0 404 Not Found');
+		header('HTTP/1.1 404 Not Found');
 		echo $this->language('err_404_subject');
 
 		exit();
@@ -505,7 +507,7 @@ class app extends app_core {
 	}
 
 	$this->set_template('error_404', $this->variables);
-	$this->set_header('HTTP/1.0 404 Not Found', true);
+	$this->set_header('HTTP/1.1 404 Not Found', true);
 
 	/*
 	 * Load template object instance

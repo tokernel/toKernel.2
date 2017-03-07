@@ -405,12 +405,12 @@ class html_lib {
 
 		/*
 		 * Remove keywords from array which
-		 * lenght is less then 5 chars
+		 * length is less then 5 chars
 		 */
 		foreach($keywords_arr as $key) {
 			if(strlen($key) < 5 or strlen($key) > 15) {
 				unset($keywords_arr[$cnt]);
-			} // end check key lenght
+			} // end check key length
 			$cnt++;
 		} // end foreach
 

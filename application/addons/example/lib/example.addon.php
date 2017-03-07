@@ -17,7 +17,7 @@
 /* Restrict direct access to this file */
 defined('TK_EXEC') or die('Restricted area.');
 
-class example_addon extends addon {
+class example_addon extends base_addon {
 	
 	public function __construct($params) {
 		parent::__construct($params);

@@ -22,7 +22,7 @@
  * @package    framework
  * @subpackage kernel
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @version    2.0.0
  * @link       http://www.tokernel.com
@@ -76,18 +76,17 @@ class lib {
 
 /**
  * Prevent cloning of the object. 
- * Trigger E_USER_ERROR if attempting to clone
+ * Trigger E_USER_ERROR if attempting to clone.
  * 
  * @access public
  * @return void
  */
  public function __clone() {
- 	trigger_error( 'Cloning the object is not permitted (' . 
-	               __CLASS__.')', E_USER_ERROR );
+ 	trigger_error( 'Cloning the object is not permitted ('.__CLASS__.')', E_USER_ERROR );
  } 
  
 /**
- * Return result from load_lib function
+ * Return result from load function
  *
  * @final
  * @access public
@@ -107,19 +106,22 @@ class lib {
  * @return object $instance
  */
  final public static function instance() {
-	if(!isset(self::$instance)) {
+
+    if(!isset(self::$instance)) {
 		 $obj = __CLASS__;
 		 self::$instance = new $obj;
 	}
 
 	return self::$instance;
+
  } // end func instance
 	
 /**
  * Load library and return object.
- * Include library file from application dir if it exists,
- * else include from framework dir.
- * Trigger error if lib file not found in any of them.
+ * Include library file from /application/lib if exists,
+ * else include from tokernel.framework/lib.
+ *
+ * Trigger error if lib file not found in any of path.
  * 
  * @access public
  * @param string $object_name
@@ -134,8 +136,8 @@ class lib {
  		return false;
  	}
  	
- 	/* Return lib object if already loaded */
-	if(array_key_exists($object_name, self::$loaded_objects) and $clone == false) {
+ 	/* Return lib object if already loaded and no clone requested */
+ 	if(array_key_exists($object_name, self::$loaded_objects) and $clone == false) {
        return self::$loaded_objects[$object_name];
 	}
 
@@ -143,7 +145,7 @@ class lib {
 
 	// Library not exists
 	if(!$lib_path) {
-		trigger_Error('Library ' . $object_name . ' not exists!', E_USER_ERROR);
+		trigger_Error('Library ' . $object_name . ' does not exists!', E_USER_ERROR);
 	}
 
 	/* Set lib file name from directory. */

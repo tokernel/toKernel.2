@@ -444,12 +444,52 @@ class example_addon extends base_addon {
     }
 
     /**
+     * Working with libraries
+     *
+     * Libraries locates in /tokernel.framework/lib
+     * and can be extended/overridden in /application/lib
+     *
+     * http://localhost/my_project/example/lib_usage
+     */
+    public function action_lib_usage() {
+
+        // Let's validate some data with validation library.
+        var_dump($this->lib->valid->email('wrong-email'));
+
+        /*
+         * If the library called once, the same copy of object will
+         * be returned next time when we call again.
+         * In this example, same copy of loaded object
+         * (validation class library) will be used.
+         */
+        var_dump($this->lib->valid->id(55));
+
+        /*
+         * Now, let's get 2 different instances of library object
+         */
+        // in this example we not using any constructor arguments.
+        $params = NULL;
+
+        // Define an instance of Pagination class library
+        $p1 = $this->lib->load('pagination', $params, true);
+        // The last argument "true" assumes that the new instance of library will be returned.
+
+        $base_url = $this->lib->url->url('example', 'lib_usage', array(0 => '{var.offset}', 2 => 'some-other-arg'));
+        echo $p1->run(155, 10, 1, $base_url);
+
+        // Define a new instance if same library
+        $p2 = $this->lib->load('pagination', $params, true);
+        echo $p2->run(1050, 50, 5);
+
+    }
+
+    /**
      * Extending class libraries into application.
      *
      * In the toKernel framework we have shopping_cart library:
      *  /tokernel.framework/lib/shopping_cart.lib.php
      * and it is extended in application as:
-     *  /application/lib/shopping_cart.lib.php
+     *  /application/lib/shopping_cart.ext.lib.php
      *
      * The items_get_json() method added to extended library.
      *

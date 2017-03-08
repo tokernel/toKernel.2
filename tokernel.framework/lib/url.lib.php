@@ -244,14 +244,14 @@ class url_lib {
             }
 
             /*
-            Check, if application allowed to parse URLs with dashed segments.
-            Example: /addon-name-with-dashes/and-action-name/param-1/param-2
-            Will parse as:
-            addon: addon_name_with_dashes
-            action: and_action_name
-            params: param-1, param-2
-            Notice: in routes configuration dashes is allowed by default.
-            */
+             * Check, if application allowed to parse URLs with dashed segments.
+             * Example: /addon-name-with-dashes/and-action-name/param-1/param-2
+             * Will parse as:
+             * addon: addon_name_with_dashes
+             * action: and_action_name
+             * params: param-1, param-2
+             * Notice: in routes configuration dashes is allowed by default.
+             */
             if($config->item_get('http_allow_url_dashes', 'HTTP') == 1) {
                 $this->addon = str_replace('-', '_', $this->addon);
                 $this->action = str_replace('-', '_', $this->action);

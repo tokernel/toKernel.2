@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2016 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.1.1
+ * @version    1.1.2
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -259,8 +259,7 @@ abstract class app_core {
 	self::$instance->language = self::$instance->lib->language->instance(
     					$language_prefix, 
     					array(
-						    TK_APP_PATH . 'languages' . TK_DS,
-     						TK_PATH . 'languages' . TK_DS, 
+						    TK_APP_PATH . 'languages' . TK_DS
      						), 
      					'application',	
      					true);
@@ -268,27 +267,33 @@ abstract class app_core {
 	tk_e::log_debug('Loaded "language" object', 'app::' . __FUNCTION__);
      					
     /* Configure error handler with application configuration values */
-    self::$instance->config->item_set('err_subject_production', 
-    					self::$instance->language->get(
-    					'err_subject_production'), 'ERROR_HANDLING');
+    self::$instance->config->item_set(
+        'err_subject_production',
+        self::$instance->language->get('err_subject_production'),
+        'ERROR_HANDLING'
+    );
     					
-	self::$instance->config->item_set('err_message_production', 
-						self::$instance->language->get(
-						'err_message_production'), 'ERROR_HANDLING');
+	self::$instance->config->item_set(
+	    'err_message_production',
+		self::$instance->language->get('err_message_production'),
+        'ERROR_HANDLING'
+    );
 						
-	self::$instance->config->item_set('err_404_subject', 
-						self::$instance->language->get('err_404_subject'), 
-						'ERROR_HANDLING');
+	self::$instance->config->item_set(
+	    'err_404_subject',
+		self::$instance->language->get('err_404_subject'),
+        'ERROR_HANDLING'
+    );
 						
-	self::$instance->config->item_set('err_404_message', 
-						self::$instance->language->get('err_404_message'), 
-						'ERROR_HANDLING');
+	self::$instance->config->item_set(
+	    'err_404_message',
+		self::$instance->language->get('err_404_message'),
+        'ERROR_HANDLING'
+    );
 	
-	tk_e::configure_error_handling(
-    					self::$instance->config->section_get('ERROR_HANDLING'));
+	tk_e::configure_error_handling(self::$instance->config->section_get('ERROR_HANDLING'));
     
-	tk_e::log_debug('Configured Error Exception/Handler data', 
-												'app::' . __FUNCTION__);
+	tk_e::log_debug('Configured Error Exception/Handler data', 'app::' . __FUNCTION__);
     					
 	/* Set initialization status variables */ 
 	self::$initialized = true;
@@ -308,8 +313,7 @@ abstract class app_core {
  * @return void
  */
  final public function __clone() {
-	trigger_error('Cloning the object is not permitted ('.__CLASS__.')', 
-	              E_USER_ERROR );
+	trigger_error('Cloning the object is not permitted ('.__CLASS__.')', E_USER_ERROR );
 	              
  } // end func __clone
 

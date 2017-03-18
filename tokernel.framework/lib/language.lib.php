@@ -1,8 +1,8 @@
 <?php
 /**
  * toKernel - Universal PHP Framework.
- * Language processing library for application, addons, etc...
- * 
+ * Multi-Language library for application, addons and modules
+ *
  * This file is part of toKernel.
  *
  * toKernel is free software: you can redistribute it and/or modify
@@ -22,12 +22,11 @@
  * @package    framework
  * @subpackage library
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    2.0.0
+ * @version    3.0.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
- * @todo	   Create functions - sync, compare.
  */
 
 /* Restrict direct access to this file */
@@ -35,272 +34,189 @@ defined('TK_EXEC') or die('Restricted area.');
 
 /**
  * language_lib class
- * 
+ *
  * @author David A. <tokernel@gmail.com>
  */
 class language_lib {
 	
-/**
- * Library object for working with 
- * libraries in this class
- * 
- * @var object
- * @access protected
- */ 
- protected $lib;
-
-/**
- * Language prefix.
- * Ex: en | ru 
- * 
- * @access protected
- * @var string
- */ 
- protected $prefix;
- 
-/**
- * Language owner id
- * 
- * @access protected
- * @var string
- */ 
- protected $owner_id;
- 
-/**
- * Array of include paths for language files.
- * 
- * @access protected
- * @var array
- */ 
- protected $include_paths = array();
-
-/**
- * Array of loaded languages
- * Each item of this array is instance of ini class lib
- * 
- * @access protected
- * @var array
- */ 
- protected $languages;
-
-/**
- * allow searching for english, if specified language not found. 
- * 
- * @access protected
- * @var bool
- */ 
- protected $en;
-
-/**
- * Class constructor
- * 
- * @access public
- * @return void
- */ 
- public function __construct() {
+	/**
+	 * Library object to access all libraries
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $lib;
+	
+	/**
+	 * Loaded language prefix
+	 * Example: en | ru
+	 *
+	 * This value equal to language file extension.
+	 *
+	 * @access protected
+	 * @var string
+	 */
+	protected $language_prefix;
 		
-	$this->prefix = '';
-	$this->owner_id = '';
-	$this->include_paths = array();
-
-	$this->lib = lib::instance();
-
-	$this->languages = array();
-	$this->en = false;
-
- } // end constructor
-
-/**
- * This magic function will call get.
- * Return language value by expression. 
- * 
- * @access public
- * @param string $item
- * @return mixed
- */ 
- public function __get($item) {
-	return $this->get($item);
- }
- 
-/**
- * Magic function will return language prefix.
- * 
- * @access public
- * @return string
- */
- public function __toString() {
-	return $this->prefix;
- }
- 
-/**
- * Return instance of this object
- *
- * @access public
- * @param string $prefix
- * @param string $owner_id
- * @param bool $search_for_en_
- * @return mixed object | bool
- */
- public function instance($prefix, $language_paths, $owner_id, $search_for_en_ = false) {
-
-	if(trim($prefix) == '') {
-		trigger_error('Loading language for "'.$owner_id.'" in ' . 
-						__CLASS__ . '::' . __FUNCTION__ . 
-						'(). Language prefix is empty!', E_USER_WARNING);
-		$prefix = 'en';
+	/**
+	 * Language file path
+	 *
+	 * @access protected
+	 * @var string
+	 */
+	protected $language_file;
+	
+	/**
+	 * Loaded language object
+	 * The object will not be loaded until first item request.
+	 *
+	 * @access protected
+	 * @var object
+	 */
+	protected $language;
+		
+	/**
+	 * Class constructor
+	 *
+	 * @access public
+	 */
+	public function __construct() {
+		
+		$this->lib = lib::instance();
+		
+		$this->language_prefix = '';
+		$this->language_file = '';
+				
+		$this->language = NULL;
+				
+	} // end constructor
+	
+	/**
+	 * Magic function will return language prefix.
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function __toString() {
+		return $this->language_prefix;
 	}
 	
-	if(trim($owner_id) == '') {
-		trigger_error('Loading language in ' . __CLASS__ . '::' . __FUNCTION__ . 
-						'(). Language owner id is empty!', E_USER_WARNING);
-		$owner_id = 'application';
+	/**
+	 * Return instance of object library
+	 *
+	 * @access public
+	 * @param string $language_file
+	 * @return mixed object | bool
+	 */
+	public function instance($language_file) {
+		
+		/* Check if language file exists */
+		if(!is_file($language_file)) {
+			trigger_error('Language file `' . $language_file . '` not exists!` !', E_USER_ERROR);
+			return false;
+		}
+				
+		$this->__construct();
+		
+		$this->language_file = $language_file;
+						
+		return clone $this;
+		
+	} // end func instance
+	
+	/**
+	 * Get language value by item
+	 * Using second argument to pass values into item.
+	 *
+	 * @access public
+	 * @param string $item
+	 * @param array $lng_args
+	 * @return mixed string | bool
+	 */
+	public function get($item, array $lng_args = array()) {
+		
+		if(trim($item) == '') {
+			trigger_error('Translation expression is empty for language library! (Language file: `'.$this->language_file.'`)', E_USER_ERROR);
+			return false;
+		}
+		
+		$return_val = '';
+		
+		/* load language file to object if not loaded */
+		if(!is_object($this->language)) {
+			$this->file_load();
+		}
+	
+		/* Define item value if exists */
+		if($this->language->item_exists($item)) {
+			$return_val = $this->language->item_get($item);
+		} else {
+			return false;
+		}
+		
+		/* Trigger error even if item exists but value is empty */
+		if(trim($return_val) == '') {
+			trigger_error('Item `'.$item.'` exists but value is empty in file: `'.$this->language_file .'` !', E_USER_ERROR);
+			return false;
+		}
+		
+		// Check if count of replacements greater than 0.
+		$rep_count_in_str = mb_substr_count($return_val, '%s');
+		$rep_count_in_arr = count($lng_args);
+		
+		if($rep_count_in_str != $rep_count_in_arr) {
+			
+			$err_string = htmlspecialchars($item . '='.$return_val);
+			
+			trigger_error('Invalid arguments for translation expression `' . $err_string.'` in ' .
+				'language file ('.$this->language_file.').', E_USER_NOTICE);
+			
+			return false;
+		}
+		
+		/* Parse language expression arguments if not empty */
+		if(!empty($lng_args)) {
+			return vsprintf($return_val, $lng_args);
+		} else {
+			return $return_val;
+		}
+		
+	} // end func get
+	
+	/**
+	 * Load language file.
+	 *
+	 * @access protected
+	 * @return void
+	 */
+	protected function file_load() {
+		
+		/* Define language prefix from file name */
+		$this->language_prefix = $this->lib->file->strip_ext(basename($this->language_file));
+		
+		/* Load language object */
+		$this->language = $this->lib->ini->instance($this->language_file, NULL, true);
+		
+		/* Check if language object is valid */
+		if(!is_object($this->language)) {
+			trigger_error('Unable to load language file `'.$this->language_file.'` to object!', E_USER_ERROR);
+			return false;
+		}
+		
+	} // end func file_load
+	
+	/**
+	 * Return language prefix
+	 * Ex: en | ru
+	 *
+	 * @access public
+	 * @return string
+	 */
+	public function language_prefix() {
+		return $this->language_prefix;
 	}
-
-	$this->__construct();
 	
-	$this->include_paths = $language_paths;
-	
-	$this->prefix = $prefix;
-	$this->owner_id = $owner_id;
-	$this->en = $search_for_en_;
-	
-	return clone $this;
-
- } // end func instance
-
-/**
- * Get language value by item
- * return {item}, if value not found.
- * This function supports optional arguments for other 
- * values in language expression.
- * 
- * Example 1. call with some count of arguments.
- * $this->language->get('say', 'hello', 'word'); 
- * // where 'say' = 'Said - %s %s!' and will return "Said - Hello world!".
- * 
- * Example 2. call with array of values.
- * $this->language->get('say', array('hello', 'word')); 
- * // where 'say' = 'Said - %s %s!' and will return "Said - Hello world!". 
- * 
- * @access public
- * @param string $item
- * @return string
- */ 
- public function get($item) {
-
- 	if(trim($item) == '') {
- 		trigger_error('Translation expression is empty for owner id "' . 
- 						$this->owner_id.'". language prefix=' . 
- 						$this->prefix , E_USER_NOTICE);
- 						
- 		return '{'.$item.'}';
- 	}
-
- 	$return_val = '';
- 	
- 	// 1. Load custom required language file if not loaded
- 	foreach($this->include_paths as $path) {
- 		
- 		// load file if not loaded
- 		if(!isset($this->languages[$this->prefix . '_' . $path])) {
- 			$this->file_load($this->prefix, $path);
- 		}
- 		
- 		// Return item if exists from custom file
-		if($this->languages[$this->prefix . '_' . $path]->item_exists($item)) {
-			$return_val = $this->languages[$this->prefix . '_' . $path]->item_get($item);
-			break;
- 		}
- 		
- 	} // end foreach
- 	
- 	// 2. Search for English if enabled
- 	if($this->prefix != 'en' and $this->en == true and $return_val == '') {
- 	
- 		// Load English
-		foreach($this->include_paths as $path) {
- 		
- 			// load file if not loaded
- 			if(!isset($this->languages['en_' . $path])) {
-				$this->file_load('en', $path);
- 			}
- 		
-			// Return item if exists from english file
-			if($this->languages['en_' . $path]->item_exists($item)) {
-				$return_val = $this->languages['en_' . $path]->item_get($item);
-				break; 
- 			}
-
-		} // end foreach
- 	} // end if search for English
-
- 	if($return_val != '') {
- 		
- 		// manage arguments
- 		if(func_num_args() > 1) {
- 		
- 			$l_args = func_get_args();
- 			unset($l_args[0]);
- 		
- 			if(is_array($l_args[1])) {
- 				$l_args = $l_args[1];
- 			}
- 			
- 			$freturn_val = vsprintf($return_val, $l_args);
- 			
- 			if($freturn_val != '') {
- 				return $freturn_val;
- 			} else {
- 				
- 				trigger_error('Too few arguments in function vsprintf() for ' . 
- 							  'translation expression `' . $item . '` in ' . 
- 							  'language ('.$this->prefix.'). Owner id "' . 
- 							  $this->owner_id.'" ', E_USER_NOTICE);
- 				
- 				return '{'.$return_val.'}';
- 			}
-
- 		} else {
- 			return $return_val;
- 		}
- 		
- 	} else {
- 	
- 		trigger_error('Translation expression `' . $item . '` not found in ' . 
- 		 			  'language file. Owner id "' . $this->owner_id . '". ' . 
- 		 			  'language prefix='.$this->prefix, E_USER_NOTICE);
- 		
- 		return '{'.$item.'}';
- 	}
- 	 	
- } // end func get
-
-/**
- * Load language file.
- * 
- * @access protected
- * @param string $prefix
- * @param string $path
- * @return void
- */ 
- protected function file_load($prefix, $path) {
-
- 	$this->languages[$prefix . '_' . $path] = $this->lib->ini->instance($path . $prefix . '.ini', NULL, true);
- 
- } // end func file_load
-
-/**
- * Return language prefix
- * Ex: en | ru
- *
- * @access public
- * @return string
- */	
- public function prefix() {
-	return $this->prefix;
- }
-	
-/* End of class language_lib */
+	/* End of class language_lib */
 }
 
 /* End of file */

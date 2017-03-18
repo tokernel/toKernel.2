@@ -87,6 +87,7 @@ class db_base_lib {
  * Class constructor
  *
  * @access public
+ * @param array $config
  * @return void
  */
  public function __construct(array $config) {

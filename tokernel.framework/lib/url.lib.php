@@ -148,7 +148,6 @@ class url_lib {
      * Class constructor
      *
      * @access public
-     * @return void
      */
     public function  __construct() {
 

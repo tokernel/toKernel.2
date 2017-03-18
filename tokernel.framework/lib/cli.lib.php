@@ -1,7 +1,7 @@
 <?php
 /**
  * toKernel - Universal PHP Framework.
- * Class for working with PHP Command line interface
+ * CLI - Command line interface class library.
  * 
  * This file is part of toKernel.
  *
@@ -22,9 +22,9 @@
  * @package    framework
  * @subpackage library
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    2.0.0
+ * @version    2.0.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -189,43 +189,31 @@ class cli_lib {
  	
  	/* Return true if already initialized */
 	if(self::$initialized == true) {
- 		trigger_error('CLI initialization - ' . __CLASS__ . '->' . 
- 				__FUNCTION__ . '() is already initialized!', E_USER_WARNING);
+ 		
+		trigger_error(
+ 			'CLI initialization - ' . __CLASS__ . '->' . __FUNCTION__ . '() is already initialized!',
+		    E_USER_WARNING
+	    );
  				
 		return true;
  	}
  	
- 	tk_e::log_debug('Start with arguments "' . implode(' ' ,$args) . '"', 
- 										__CLASS__.'->'.__FUNCTION__);
- 					
- 	// Check arguments count
-	if(empty($args)) {
-		tk_e::log_debug('Exit! Command line arguments is empty. Array $args[0].',
-			__CLASS__.'->'.__FUNCTION__);
-
-		trigger_error('Command line arguments is empty. Array $args[0].',
-			E_USER_WARNING);
-
-		$this->output_usage("Invalid Command line arguments!");
-		exit(TK_NO_ARGS);
-	}
-
+ 	tk_e::log_debug('Start with arguments "' . implode(' ' ,$args) . '"', __CLASS__.'->'.__FUNCTION__);
+	 
  	/*
 	 * Remove first element of $args array, 
-	 * that will be file name (index.php).
+	 * that will be the file name: index.php.
 	 */
  	array_shift($args);
 
  	/* Check arguments count */
  	if(empty($args)) {
  		
- 		tk_e::log_debug('Exit! Invalid Command line arguments.', 
- 								__CLASS__.'->'.__FUNCTION__);
- 								
- 		tk_e::log("Invalid Command line arguments!", E_USER_NOTICE, 
- 										__FILE__, __LINE__);
+ 		tk_e::log_debug('Exit! Invalid Command line arguments.', __CLASS__.'->'.__FUNCTION__);
+ 		tk_e::log("Invalid Command line arguments!", E_USER_NOTICE, __FILE__, __LINE__);
  		 									
  		$this->output_usage("Invalid Command line arguments!");
+ 		
 		exit(TK_NO_ARGS);
  	}
  	
@@ -333,7 +321,7 @@ class cli_lib {
 
 /**
  * Return text with colored format.
- * This funtion not working in Win. OS.
+ * If the OS where is application running is not *nix like, the method will return value as is.
  * 
  * @access public
  * @param string $string
@@ -420,14 +408,14 @@ class cli_lib {
  */ 
  public function output_colors() {
 
- 	if(count($this->fore_colors) <= 0) {
+ 	if(empty($this->fore_colors)) {
  		$this->out(TK_NL);
- 		$this->out('Can not output colors. It is not supported by OS.');
+ 		$this->out("Unable to output colors. This Operating system doesn't support this feature.");
  		$this->out(TK_NL);
  	}
  	
  	$this->out(TK_NL);
- 	$this->out(' [Forecolors] ' . "\t" . '[Backcolors]', 'black', 'yellow');
+ 	$this->out(' [Forecolors] ' . "\t" . '[Backcolors]', 'black', 'yellow', false);
  	$this->out(TK_NL);
 
  	reset($this->fore_colors);
@@ -437,7 +425,7 @@ class cli_lib {
  	ksort($this->back_colors);
  	
  	for($i = 0; $i < count($this->fore_colors); $i++) {
- 		$this->out(' '. key($this->fore_colors) . ' ', key($this->fore_colors));
+ 		$this->out(' '. key($this->fore_colors) . ' ', key($this->fore_colors), NULL, false);
  		
  		if(key($this->back_colors)) {
  			$j = '';
@@ -445,8 +433,8 @@ class cli_lib {
  			for($k = 0; $k < $val; $k++) {
  				$j .= ' ';
  			}
- 			$this->out(' ' . $j);
- 			$this->out(' ' . key($this->back_colors) . ' ', 'black', key($this->back_colors));
+ 			$this->out(' ' . $j, NULL, NULL, false);
+ 			$this->out(' ' . key($this->back_colors) . ' ', 'black', key($this->back_colors), false);
  		}
  		
  		$this->out(TK_NL);

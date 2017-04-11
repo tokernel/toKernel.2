@@ -19,9 +19,9 @@ class example_db_example_module extends module {
 
     protected $db;
 
-    public function __construct($attr, $id_addon, $config, $log, $language) {
+    public function __construct($params) {
 
-        parent::__construct($attr, $id_addon, $config, $log, $language);
+        parent::__construct($params);
 
         // Define MySQL library instance
         // 'toKernel_mysql_db' is the connection credentials section name in: /application/config/databases.ini
@@ -342,4 +342,3 @@ class example_db_example_module extends module {
     }
 
 } // End of class module
-?>

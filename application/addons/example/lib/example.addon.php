@@ -17,12 +17,27 @@
 /* Restrict direct access to this file */
 defined('TK_EXEC') or die('Restricted area.');
 
-class example_addon extends base_addon {
+class example_addon extends user_base_addon {
 	
+	protected $model2;
+	protected $mod2;
+	/**
+	 * Class constructor
+	 *
+	 * @access public
+	 * @param array $params
+	 */
 	public function __construct($params) {
 		parent::__construct($params);
+		$this->model2 = $this->load_model('submoddir/subsimple', 'toKernel_mysql_db');
+		
+		// This module has own language file
+		$this->mod2= $this->load_module('subdir/sub-sub-dir/sub_sub');
+		
+		// This module not have own language file
+		
 	}
-
+	
     /**
      * Defining methods for:
      * web accessible default (index action).
@@ -72,21 +87,31 @@ class example_addon extends base_addon {
 
 	/**
      * Examples of CLI usage
-     * Notice: To access (call/run) methods in command line, the methods names should start with "cli_" prefix.
+	 *
+	 * Arguments in command line defines the way which addon and action will be called with patams.
+	 *
+	 * # php {path_to_root_of_your_project}/index.php {addon_to_call} {action_to_call} {param1} {paramN}
+	 *
+     * Notice: To access (call/run) methods in command line, the method names should start with "cli_" prefix.
      * See: http://tokernel.com/framework/documentation/class-libraries/cli
      *
-     * Methods listed bellow, loads and using module /application/addons/example/modules/cli_example.module.php
+     * Methods listed bellow, loads and uses module /application/addons/example/modules/cli_example.module.php
      */
 
     /**
-     * cli accessible (accessible only in command line interface).
+     * cli accessible only in command line interface.
      *
      * This method accessible only in command line interface because of having "cli_" prefix.
      *
      * Just display welcome message in CLI screen
      *
      * Run this method calling:
-     * # php {path_to_root_of_your_project}/index.php --addon example --action welcome
+     * # php {path_to_root_of_your_project}/index.php example welcome
+     *
+     * Another way to call by configured route.
+     * # php {path_to_root_of_your_project}/index.php welcome
+     *
+     * See: application/config/routes.ini
      */
     public function cli_welcome() {
         $cli_module = $this->load_module('cli_example');
@@ -97,7 +122,7 @@ class example_addon extends base_addon {
      * Run CLI application in interactive mode (with inserting values)
      *
      * Run this method calling:
-     * # php {path_to_root_of_your_project}/index.php --addon example --action interactive
+     * # php {path_to_root_of_your_project}/index.php example interactive
      */
     public function cli_interactive() {
         $cli_module = $this->load_module('cli_example');
@@ -108,18 +133,33 @@ class example_addon extends base_addon {
      * Run CLI application with parameters
      *
      * Run this method calling:
-     * # php {path_to_root_of_your_project}/index.php --addon example --action with_params --name David --email tokernel@gmail.com
+     * # php {path_to_root_of_your_project}/index.php example with_params toKernel framework@tokernel.com
      */
     public function cli_with_params() {
         $cli_module = $this->load_module('cli_example');
         $cli_module->with_params();
+    }
+    
+    /*
+     * Another way to get CLI params with $params argument defined.
+     *
+     * Run {path_to_root_of_your_project}/index.php example with_params_other toKernel framework@tokernel.com
+     */
+    public function cli_with_params_other(array $params = array()) {
+	    $cli_module = $this->load_module('cli_example', $params);
+	    $cli_module->output_params();
     }
 
     /**
      * Output CLI colors
      *
      * Run this method calling:
-     * # php {path_to_root_of_your_project}/index.php --addon example --action colors
+     * # php {path_to_root_of_your_project}/index.php example colors
+     *
+     * Also it is possible to run this action with other, routes name
+     * # php {path_to_root_of_your_project}/index.php show-your-colors
+     *
+     * See: application/config/routes.ini
      */
     public function cli_colors() {
         $this->lib->cli->output_colors();
@@ -241,7 +281,30 @@ class example_addon extends base_addon {
         echo 'This is the addon action output.';
 
     }
-
+	
+	/**
+	 * Load template with module specific widgets
+	 *
+	 * http://localhost/my_project/example/template_with_module_widgets
+	 */
+	public function action_template_with_module_widgets() {
+		
+		// Setting the application template to process.
+		// The second argument array specifies the values to parse in template.
+		$this->app->set_template(
+			'example.my_template_with_module_specific_widgets',
+			array(
+				'app_name' => TK_SHORT_NAME,
+				'app_description' => TK_DESCRIPTION
+			)
+		);
+		
+		// This output will display in template widget named "__THIS__".
+		// See: /application/templates/frontend/example.my_template_with_module_specific_widgets.tpl.php
+		echo 'This is the addon action output.';
+		
+	}
+	
     /**
      * Widget without parameters.
      *
@@ -297,9 +360,15 @@ class example_addon extends base_addon {
 
         // Load the view object
         $view = $this->load_view('simple');
-
+	    
+        echo 'Config before:' . $this->config->item_get('data', 'EXAMPLE');
+        echo '<br />';
+        
         // Output the view HTML content to screen.
         $view->show();
+	
+	    echo 'Config after:' . $this->config->item_get('data', 'EXAMPLE');
+	    echo '<br />';
     }
 
     /**
@@ -473,13 +542,15 @@ class example_addon extends base_addon {
         // Define an instance of Pagination class library
         $p1 = $this->lib->load('pagination', $params, true);
         // The last argument "true" assumes that the new instance of library will be returned.
-
+	    
+	    $offset = $this->lib->url->params(0);
+	    	    
         $base_url = $this->lib->url->url('example', 'lib_usage', array(0 => '{var.offset}', 2 => 'some-other-arg'));
-        echo $p1->run(155, 10, 1, $base_url);
-
+        echo $p1->run(155, 10, $offset, $base_url);
+	    
         // Define a new instance if same library
         $p2 = $this->lib->load('pagination', $params, true);
-        echo $p2->run(1050, 50, 5);
+        echo $p2->run(1050, 10, $offset, $base_url);
 
     }
 
@@ -528,6 +599,154 @@ class example_addon extends base_addon {
         print_r($s->items_get_json());
 
     }
+    
+    public function action_modsubdir() {
+    	
+    	$mod = $this->load_module('subdir/sub');
+    	
+    	$data = $this->config('data', 'EXAMPLE');
+    	echo $data . '<br />';
+    	
+    	$mod->say_hello();
+	    echo '<br />';
+	    
+	    $data = $this->config('data', 'EXAMPLE');
+	    echo $data . '<br />';
+	    
+	    //$subsubm = $this->load_module('subdir/sub-sub-dir/sub_sub');
+	    //$subsubm->say_sub_hi();
+	    
+    }
+    
+    public function action_model_simple() {
+    	$model = $this->load_model('simple_test', 'toKernel_mysql_db');
+	    print_r($model->test());
+	    
+	    
+	    print_r($this->model2->give());
+    }
+    
+    public function action_test_language() {
+	    
+    	echo '<p>This is in addon</p>';
+	    echo $this->language('_rangelength', array(15, 105));
+	
+	    echo '<p>'.$this->language('my_project_name_is_with_version', array(TK_SHORT_NAME, TK_DESCRIPTION)).'</p>';
+	
+		echo '<p>This is in addon\'s view file</p>';
+		$v = $this->load_view('lng_test');
+		$v->show();
+		
+		////
+	    $this->mod2->test_language();
+	    
+    }
+    
+    public function action_clone_module() {
+    	
+    	echo '<h1>New Clones of module</h1>';
+    	
+    	echo '<h2>Config name in addon start: ' . $this->config('name', 'EXAMPLE') . '</h2>';
+    	
+    	$m1p = array('age' => 37);
+    	$m1 = $this->load_module('clone', $m1p, true);
+    	$m1->name = 'Dato';
+	
+	    echo '<h2>Config name in module 1 start: ' . $this->config('name', 'EXAMPLE') . '</h2>';
+	    
+    	echo 'Module 1: ' . $m1->name . '<br />';
+	
+    	$m1->dump_params();
+	
+	    $m2p = array('work' => 'developer');
+	    $m2 = $this->load_module('clone', $m2p, true);
+	    $m2->name = 'Ayvik';
+	
+	    echo 'Module 2: ' . $m2->name . '<br />';
+	    $m2->dump_params();
+	
+	    echo '<h2>Config name in module 2 start: ' . $this->config('name', 'EXAMPLE') . '</h2>';
+	    
+	    echo 'Module 1: ' . $m1->name . '<br />';
+	    $m1->dump_params();
+	
+	    echo '<h2>Config name in module 1 start: ' . $this->config('name', 'EXAMPLE') . '</h2>';
+	    
+	    echo '<h1>New Clones of model</h1>';
+	    
+	    echo '<p>model 1</p>';
+	    $mod1p = array('id_user' => 33);
+	    $mod1 = $this->load_model('clone', null, true);
+	    $mod1->set_table('users');
+	    echo $mod1->get_table() . '<br />';
+		//$mod1->dump_params();
+		
+	    echo '<p>model 2</p>';
+	    $mod2p = array('id_admin' => 99);
+	    $mod2 = $this->load_model('clone', null, true);
+	    $mod2->set_table('admins');
+	    echo $mod2->get_table() . '<br />';
+	    //$mod2->dump_params();
+    }
+    
+    public function action_test_base_addon() {
+    	echo '<h1>Base addon test</h1>';
+    	echo '<p>The email in base class is:' . $this->get_email() . '</p>';
+	
+	    echo '<h1>Base module test</h1>';
+	    $mod = $this->load_module('test_base');
+	    $mod->run();
+	    
+	    echo '<h2>Testing module loading in extended module constructor</h2>';
+	    $mod->work_with_module();
+	
+	    echo '<h2>Testing base model</h2>';
+	    $model = $this->load_model('clone');
+	    echo $model->get_table();
+	    	    	    
+    }
+	
+	/**
+	 * Using Form/Data Validation library
+	 * Examples of data validations for:
+	 *  - POST global array (form submit).
+	 *  - Other example (can be used in RESTFul API Development).
+	 *  - Custom array data validation.
+	 *
+	 * See: /application/addons/example/modules/form_validation_example.module.php
+	 */
+	
+	/**
+	 * Validating form data (submitted POST request)
+	 * http://localhost/my_project/example/form_submit_validation
+	 */
+	public function action_form_submit_validation() {
+		
+		$module = $this->load_module('form_validation_example');
+		$module->form_submit_validation();
+		
+	}
+	
+	/**
+	 * Validating Other type of request (PUT).
+	 * http://localhost/my_project/example/other_request_validation
+	 */
+    public function action_other_request_validation() {
+    	
+    	$module = $this->load_module('form_validation_example');
+	    $module->other_request_validation();
 
+    }
+	
+	/**
+	 * Validating custom data array
+	 * http://localhost/my_project/example/custom_data_validation
+	 */
+	public function action_custom_data_validation() {
+		
+		$module = $this->load_module('form_validation_example');
+		$module->custom_data_validation();
+		
+	}
+	
 } // end class
-?>

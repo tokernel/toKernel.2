@@ -14,8 +14,8 @@ defined('TK_EXEC') or die('Restricted area.');
 
 class example_views_example_module extends module {
 
-    public function __construct($attr, $id_addon, $config, $log, $language) {
-        parent::__construct($attr, $id_addon, $config, $log, $language);
+    public function __construct($params) {
+        parent::__construct($params);
     }
 
     /**
@@ -31,4 +31,3 @@ class example_views_example_module extends module {
     }
 
 }
-?>

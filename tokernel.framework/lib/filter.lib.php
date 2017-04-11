@@ -122,7 +122,6 @@ class filter_lib {
 	 * Class constructor
 	 *
 	 * @access public
-	 * @return void
 	 */
 	public function __construct() {
 		$this->lib = lib::instance();
@@ -147,13 +146,12 @@ class filter_lib {
 		
 		/* Prevent malicious GLOBALS overload attack */
 		if(isset($_REQUEST['GLOBALS']) or isset($_FILES['GLOBALS'])) {
-			trigger_error('Global variable overload attack detected! ' .
-				'Request aborted.', E_USER_ERROR);
+			trigger_error('Global variable overload attack detected! Request aborted.', E_USER_ERROR);
 			exit(1);
 		}
 		
 		/*
-		 * Remove globals which exist in removable_globals,
+		 * Remove globals which exists in removable_globals,
 		 * otherwise do clean by received arguments.
 		 */
 		foreach($GLOBALS as $g_key => $g_value) {
@@ -162,10 +160,10 @@ class filter_lib {
 			}
 		} // end foreach
 		
-		/* Define PUT, DELETE arrays for RESTFul API and so */
+		/* Define methods other than GET and POST */
 		$method = $_SERVER['REQUEST_METHOD'];
 		
-		if ($method == 'PUT' or $method == 'DELETE') {
+		if($method != 'GET' and $method != 'POST') {
 			
 			$_GLOBAL_REQUEST_ = array();
 			parse_str(file_get_contents('php://input'), $_GLOBAL_REQUEST_);
@@ -173,7 +171,7 @@ class filter_lib {
 			
 			// Add these request vars into _REQUEST
 			$_REQUEST = $_GLOBAL_REQUEST_ + $_REQUEST;
-			
+
 		}
 		
 		/*
@@ -181,50 +179,42 @@ class filter_lib {
 		 */
 		$GLOBALS['_GET'] = array();
 		
+		/* GLOBALS to clean */
+		$globals_to_clean = array(
+			'_POST',
+			'_PUT',
+			'_DELETE',
+			'_OPTIONS',
+			'_TRACE',
+			'_PATCH',
+			'_LOCK',
+			'_PROPFIND',
+			'_REQUEST',
+			'_COOKIE',
+			'_FILES',
+			'_SERVER',
+			'_SESSION',
+			'argv'
+		);
+		
 		/* Clean globals */
-		$GLOBALS['_SERVER']	 = $this->clean_data($GLOBALS['_SERVER']);
-		$GLOBALS['_POST']	 = $this->clean_data($GLOBALS['_POST']);
-		$GLOBALS['_REQUEST'] = $this->clean_data($GLOBALS['_REQUEST']);
-		$GLOBALS['_COOKIE']	 = $this->clean_data($GLOBALS['_COOKIE']);
-		$GLOBALS['_FILES']   = $this->clean_data($GLOBALS['_FILES']);
-		
-		if(isset($GLOBALS['_SESSION'])) {
-			$GLOBALS['_SESSION'] = $this->clean_data($GLOBALS['_SESSION']);
-		} else {
-			$GLOBALS['_SESSION'] = array();
+		foreach($globals_to_clean as $global_name) {
+			
+			if(isset($GLOBALS[$global_name])) {
+				
+				$GLOBALS[$global_name] = $this->clean_data($GLOBALS[$global_name]);
+				
+				/* Clean for xss */
+				if($xss_clean == true) {
+					$GLOBALS[$global_name] = $this->clean_xss($GLOBALS[$global_name], false);
+				}
+				
+			} else {
+				$GLOBALS[$global_name] = array();
+			}
+			
 		}
-		
-		if(isset($GLOBALS['_PUT'])) {
-			$GLOBALS['_PUT'] = $this->clean_data($GLOBALS['_PUT']);
-		} else {
-			$GLOBALS['_PUT'] = array();
-		}
-		
-		if(isset($GLOBALS['_DELETE'])) {
-			$GLOBALS['_DELETE'] = $this->clean_data($GLOBALS['_DELETE']);
-		} else {
-			$GLOBALS['_DELETE'] = array();
-		}
-		
-		if(isset($GLOBALS['argv'])) {
-			$GLOBALS['argv'] = $this->clean_data($GLOBALS['argv']);
-		} else {
-			$GLOBALS['argv'] = array();
-		}
-		
-		/* Clean for xss */
-		if($xss_clean == true) {
-			$GLOBALS['_SERVER']	 = $this->clean_xss($GLOBALS['_SERVER'], false);
-			$GLOBALS['_POST'] 	 = $this->clean_xss($GLOBALS['_POST'], false);
-			$GLOBALS['_REQUEST'] = $this->clean_xss($GLOBALS['_REQUEST'], false);
-			$GLOBALS['_COOKIE']  = $this->clean_xss($GLOBALS['_COOKIE'], false);
-			$GLOBALS['_FILES'] 	 = $this->clean_xss($GLOBALS['_FILES'], false);
-			$GLOBALS['_SESSION'] = $this->clean_xss($GLOBALS['_SESSION'], false);
-			$GLOBALS['_DELETE'] = $this->clean_xss($GLOBALS['_DELETE'], false);
-			$GLOBALS['_PUT'] = $this->clean_xss($GLOBALS['_PUT'], false);
-			$GLOBALS['argv']     = $this->clean_xss($GLOBALS['argv'], false);
-		}
-		
+				
 		self::$globals_cleaned = true;
 		
 	} // end func clean_globals
@@ -659,7 +649,7 @@ class filter_lib {
 	 * Strips extra whitespaces.
 	 *
 	 * @access public
-	 * @param string data to strip
+	 * @param string $data
 	 * @return string
 	 */
 	public function strip_whitespaces($data) {
@@ -765,14 +755,26 @@ class filter_lib {
 		
 	} // End func get_globals
 	
+	/*
+	HTTP Requests getters
+	 
+	GET:        In this framework we using rewrite rules and the GET method in framework not available.
+	POST:       The POST method is used to submit an entity to the specified resource, often causing a change in state or side effects on the server
+	PUT:        The PUT method replaces all current representations of the target resource with the request payload.
+	DELETE:     The DELETE method deletes the specified resource.
+	OPTIONS:    The OPTIONS method is used to describe the communication options for the target resource.
+	TRACE:      The TRACE method performs a message loop-back test along the path to the target resource.
+	PATCH:      The PATCH method is used to apply partial modifications to a resource.
+	*/
+		
 	/**
 	 * Return cleaned _POST array or array item
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function post($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
@@ -784,10 +786,10 @@ class filter_lib {
 	 * This function is useful for RESTFul API development.
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function put($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
@@ -799,24 +801,99 @@ class filter_lib {
 	 * This function is useful for RESTFul API development.
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function delete($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
 		return $this->get_globals('_DELETE', $item, $encode_html_entities, $clean_xss, $strip_tags);
-	} // end func put
+	} // end func delete
+		
+	/**
+	 * Return cleaned _OPTIONS array or array item
+	 * This function is useful for RESTFul API development.
+	 *
+	 * @access public
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
+	 * @return mixed
+	 */
+	public function options($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
+		return $this->get_globals('_OPTIONS', $item, $encode_html_entities, $clean_xss, $strip_tags);
+	} // end func options
 	
+	/**
+	 * Return cleaned _TRACE array or array item
+	 * This function is useful for RESTFul API development.
+	 *
+	 * @access public
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
+	 * @return mixed
+	 */
+	public function trace($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
+		return $this->get_globals('_TRACE', $item, $encode_html_entities, $clean_xss, $strip_tags);
+	} // end func trace
+	
+	/**
+	 * Return cleaned _PATCH array or array item
+	 * This function is useful for RESTFul API development.
+	 *
+	 * @access public
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
+	 * @return mixed
+	 */
+	public function patch($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
+		return $this->get_globals('_PATCH', $item, $encode_html_entities, $clean_xss, $strip_tags);
+	} // end func patch
+	
+	/**
+	 * Return cleaned _LOCK array or array item
+	 * This function is useful for RESTFul API development.
+	 *
+	 * @access public
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
+	 * @return mixed
+	 */
+	public function lock($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
+		return $this->get_globals('_LOCK', $item, $encode_html_entities, $clean_xss, $strip_tags);
+	} // end func lock
+	
+	/**
+	 * Return cleaned _PROPFIND array or array item
+	 * This function is useful for RESTFul API development.
+	 *
+	 * @access public
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
+	 * @return mixed
+	 */
+	public function propfind($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
+		return $this->get_globals('_PROPFIND', $item, $encode_html_entities, $clean_xss, $strip_tags);
+	} // end func propfind
+
 	/**
 	 * Return cleaned _REQUEST array or array item
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function request($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
@@ -827,10 +904,10 @@ class filter_lib {
 	 * Return cleaned _COOKIE array or array item
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function cookie($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
@@ -841,10 +918,10 @@ class filter_lib {
 	 * Return cleaned _FILES array or array item
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function files($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
@@ -855,10 +932,10 @@ class filter_lib {
 	 * Return cleaned _SERVER array or array item
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function server($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
@@ -869,10 +946,10 @@ class filter_lib {
 	 * Return cleaned _SESSION array or array item
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function session($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {
@@ -883,10 +960,10 @@ class filter_lib {
 	 * Return cleaned argv array or array item
 	 *
 	 * @access public
-	 * @param mixed item name = NULL
-	 * @param bool encode html entities = true
-	 * @param bool clean xss = false
-	 * @param bool strip html tags in xss func
+	 * @param mixed $item = NULL
+	 * @param bool $encode_html_entities = true
+	 * @param bool $clean_xss = false
+	 * @param bool $strip_tags = false
 	 * @return mixed
 	 */
 	public function argv($item = NULL, $encode_html_entities = true, $clean_xss = false, $strip_tags = false) {

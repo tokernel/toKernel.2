@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    2.0.0
+ * @version    2.0.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -35,11 +35,8 @@ defined('TK_EXEC') or die('Restricted area.');
 /**
  * image_lib class
  *
- * Load image, resize, create thumbnail and more...
- *
  * @author Arshak Ghazaryan <khazaryan@gmail.com>
  */
-
 class image_lib {
 
     /**
@@ -59,26 +56,32 @@ class image_lib {
     */
     protected $img_opt = array();
 
-    /**
-     * Return Instance of Image library with loaded image file.
-     *
-     * @access public
-     * @param string $src_file
-     * @return image_lib object
-     * @since 2.0.0
-     */
-    public function instance($src_file) {
-
-        $obj = clone $this;
-        $obj->load($src_file);
-        return $obj;
-
-    }
-
+	
     public function __construct() {
         $this->lib = lib::instance();
     }
-
+	
+	/**
+	 * Return Instance of Image library with loaded image file.
+	 *
+	 * @access public
+	 * @param string $src_file
+	 * @return mixed bool | object image_lib
+	 * @since 2.0.0
+	 */
+	public function instance($src_file) {
+		
+		$obj = clone $this;
+		
+		if(!$obj->load($src_file)) {
+			trigger_error('Unable to load file `'.$src_file.'`!', E_USER_ERROR);
+			return false;
+		}
+		
+		return $obj;
+		
+	} // End func instance
+	
     /**
      * Load image before processing
      *
@@ -559,10 +562,10 @@ class image_lib {
     * Create transparent gif image
     *
     * @access protected
-    * @param string $src_image
+    * @param resource $src_image
     * @param int $width
     * @param int $height
-    * @return void
+    * @return mixed
     */
     protected function transparent_gif($src_image, $width, $height) {
 
@@ -578,6 +581,8 @@ class image_lib {
         $transparent_color = imagecolortransparent($src_image);
         imagefill($dst_image, 0, 0, $transparent_color);
         imagecolortransparent($dst_image, $transparent_color);
+        
+        return true;
 
     } // end func transparent_gif
 
@@ -630,7 +635,7 @@ class image_lib {
     *
     * @access public
     * @param bool $output_name
-    * @return void
+    * @return bool
     */
     public function output($output_name = false) {
 
@@ -647,7 +652,9 @@ class image_lib {
         header('Content-type: ' . $this->img_opt['mime']);
         header('Content-Disposition: attachment; filename='.$output_name.';');
         call_user_func('image'.strtolower($this->img_opt['type']), $this->img_opt['resource']);
-
+	    
+        return true;
+        
     } // end func output
 
     /**
@@ -657,7 +664,7 @@ class image_lib {
      * @param array $size_options
      * @param string $destination
      * @param bool $random_name
-     * @return sting
+     * @return string
      */
     public function save_resized($size_options, $destination = NULL, $random_name = true) {
 

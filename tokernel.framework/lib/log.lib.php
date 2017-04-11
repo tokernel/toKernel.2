@@ -67,14 +67,13 @@ class log_lib {
 	 * Class constructor
 	 *
 	 * @access public
-	 * @return void
 	 */
 	public function __construct() {
 		$this->log_file = NULL;
 		$this->file_size = 524288; // kb
 		$this->log_path = TK_APP_PATH . 'log/';
 	}
-	
+		
 	/**
 	 * Return instance of log object
 	 *
@@ -94,6 +93,7 @@ class log_lib {
 		}
 		
 		return clone $this;
+		
 	} // end func instance
 	
 	/**

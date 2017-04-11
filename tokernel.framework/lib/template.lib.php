@@ -99,13 +99,21 @@ class template_lib {
 		$this->lib = lib::instance();
 		$this->app = app::instance();
 		$this->addons = addons::instance();
-		
+				
+	} // end of func __construct
+	
+	/**
+	 * Clone the object
+	 *
+	 * @access protected
+	 * @return void
+	 * @since 3.0.0
+	 */
+	protected function __clone() {
 		$this->buffer = '';
 		$this->template_name = '';
 		$this->template_vars = array();
-		
-	} // end of func __construct
-	
+	}
 	
 	/**
 	 * Load template file and return cloned instance of this object.
@@ -119,8 +127,7 @@ class template_lib {
 	public function instance($template, $template_vars = NULL, $mode = NULL) {
 		
 		$obj = clone $this;
-		$obj->__construct();
-		
+				
 		tk_e::log_debug('Start load instance.', get_class($this) . '->' . __FUNCTION__ . ' - '.$template);
 		
 		if(!$obj->load($template, $template_vars, $mode)) {
@@ -182,13 +189,13 @@ class template_lib {
 	} // end func load_template
 	
 	/**
-	 * Parse widget defination tag and return array.
+	 * Parse widget definition tag and return array.
 	 * Example of widget definition tag:
 	 * <!-- widget addon="some_addon" action="some_action"
 	 *      params="param1=param1_value|param2=param2_value" -->
 	 *
 	 * @access protected
-	 * @param string $str (widget defination tag)
+	 * @param string $str (widget definition tag)
 	 * @return mixed array | false
 	 */
 	protected function parse_widget_tag($str) {

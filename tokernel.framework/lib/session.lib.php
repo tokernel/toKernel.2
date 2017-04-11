@@ -126,7 +126,7 @@ class session_lib {
 	 * @param array $data_arr
 	 * @param string $section
 	 * @return void
-	 * @since v.1.2.0
+	 * @since 1.2.0
 	 */
 	public function set_section($data_arr, $section) {
 		$_SESSION[$this->sp . $section] = $data_arr;

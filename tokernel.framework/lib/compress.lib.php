@@ -303,9 +303,9 @@ class compress_lib {
 	 * Get remote file to process
 	 *
 	 * @access protected
-	 * @param string $url
+	 * @param  string $url
 	 * @return mixed sting | false
-	 * @since 1.1.0
+	 * @since  1.1.0
 	 */
 	protected function remote_file($url) {
 

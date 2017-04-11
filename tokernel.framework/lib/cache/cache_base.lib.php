@@ -60,9 +60,9 @@ defined('TK_EXEC') or die('Restricted area.');
      /**
       * Cache headers library object
       *
-      * @var object
+      * @var    object
       * @access protected
-      * @since v.1.1.0
+      * @since  1.1.0
       */
      protected $headers;
 
@@ -105,9 +105,9 @@ defined('TK_EXEC') or die('Restricted area.');
 	  * Define item id
 	  *
 	  * @access protected
-	  * @param string $id
+	  * @param  string $id
 	  * @return string
-	  * @since 3.0.0
+	  * @since  3.0.0
 	  */
 	 protected function to_id($id) {
 		 return md5($this->config['cache_key_prefix'] . $id);
@@ -175,7 +175,7 @@ defined('TK_EXEC') or die('Restricted area.');
 	 * @abstract
 	 * @access public
 	 * @return array
-	 * @since 1.0.0
+	 * @since  1.0.0
 	 */
     abstract public function stats();
 
@@ -183,9 +183,9 @@ defined('TK_EXEC') or die('Restricted area.');
      * Get configuration items
      *
      * @access public
-     * @param string $item
+     * @param  string $item
      * @return string
-     * @since version 1.1.0
+     * @since  1.1.0
      */
      public function config($item) {
 
@@ -201,10 +201,10 @@ defined('TK_EXEC') or die('Restricted area.');
       * Output Cache with valid headers
       *
       * @access public
-      * @param string $id
-      * @param array $replacements
+      * @param  string $id
+      * @param  array $replacements
       * @return bool
-      * @since v.1.1.0
+      * @since  1.1.0
       */
      public function output_content($id, $replacements = array()) {
 
@@ -251,10 +251,10 @@ defined('TK_EXEC') or die('Restricted area.');
       * Output Cache with valid headers and exit.
       *
       * @access public
-      * @param string $id
-      * @param array $replacements
+      * @param  string $id
+      * @param  array $replacements
       * @return bool
-      * @since v.1.1.0
+      * @since  1.1.0
       */
      public function force_output_content($id, $replacements = array()) {
 
@@ -270,10 +270,10 @@ defined('TK_EXEC') or die('Restricted area.');
       * Output headers
       *
       * @access public
-      * @param int $last_modified
-      * @param int $max_age
+      * @param  int $last_modified
+      * @param  int $max_age
       * @return void
-      * @since v.1.1.0
+      * @since  1.1.0
       */
      public function output_headers($last_modified, $max_age) {
 

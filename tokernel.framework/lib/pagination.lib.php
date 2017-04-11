@@ -69,7 +69,6 @@ class pagination_lib {
 	 *
 	 * @access public
 	 * @param mixed $config_arr
-	 * @return void
 	 */
 	public function __construct($config_arr = NULL) {
 		
@@ -137,10 +136,10 @@ class pagination_lib {
 	 * This function is useful, if you want to mysql query limit by offset.
 	 *
 	 * @access public
-	 * @param int $offset
-	 * @param int $limit
+	 * @param  int $offset
+	 * @param  int $limit
 	 * @return int
-	 * @since v.2.0.0
+	 * @since  2.0.0
 	 */
 	public function to_db_offset($offset, $limit) {
 		
@@ -330,11 +329,11 @@ class pagination_lib {
 	 * Build and return number tag
 	 *
 	 * @access protected
-	 * @param int $offset
-	 * @param array $items_arr
-	 * @param string $base_url
+	 * @param  int $offset
+	 * @param  array $items_arr
+	 * @param  string $base_url
 	 * @return string
-	 * @since v.2.0.0
+	 * @since  2.0.0
 	 */
 	protected function number_tag($offset, $items_arr, $base_url) {
 		

@@ -292,9 +292,9 @@ class html_lib {
      * Set head tag into html document <head>.
      *
      * @access public
-     * @param string $head_tag
+     * @param  string $head_tag
      * @return void
-     * @since 1.3.0
+     * @since  1.3.0
      */
     public function set_head_tag($head_tag) {
         $this->head_tags[] = $head_tag;
@@ -359,7 +359,7 @@ class html_lib {
      *
      * @access public
      * @return void
-     * @since 1.3.0
+     * @since  1.3.0
      */
     public function print_head_tags() {
 

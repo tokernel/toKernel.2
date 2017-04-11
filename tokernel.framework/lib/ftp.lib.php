@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.0.0
+ * @version    1.1.0 
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -39,6 +39,7 @@ defined('TK_EXEC') or die('Restricted area.');
  * It is possible to work with multiple instances of this object.
  *
  * @author Razmik Davoyan <razmik@davoyan.name>
+ * @author David A. <tokernel@gmail.com>
  */
 class ftp_lib {
 	
@@ -74,15 +75,27 @@ class ftp_lib {
 	 * @access private
 	 */
 	private $sys_type;
-	
-	
+		
 	/**
 	 * Class constructor
 	 *
 	 * @access public
-	 * @return void
 	 */
 	public function __construct() {
+		$this->conn_id = NULL;
+		$this->username = 'anonymous';
+		$this->host_name = '';
+		$this->sys_type = '';
+	}
+	
+	/**
+	 * Clone the object
+	 *
+	 * @access protected
+	 * @return void
+	 */
+	protected function __clone() {
+		$this->close();
 		$this->conn_id = NULL;
 		$this->username = 'anonymous';
 		$this->host_name = '';
@@ -96,12 +109,11 @@ class ftp_lib {
 	 * @return object
 	 */
 	public function instance() {
-		$this->close();
 		return clone $this;
 	}
 	
 	/**
-	 * Conncet to FTP Server
+	 * Connect to FTP Server
 	 *
 	 * @access public
 	 * @param string $host_name

@@ -114,12 +114,11 @@ class encryption_lib {
 	 * Class constructor
 	 *
 	 * @access public
-	 * @return void
 	 */
 	public function __construct() {
 		$this->password = '1B04Zrtuob2WfE66fCOY3xdti23ErWRrQXV2eEZ3Ak';
 	}
-
+	
 	/**
 	 * Return instance of this object
 	 * If password is null the default password will used.

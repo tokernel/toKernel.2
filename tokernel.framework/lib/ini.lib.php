@@ -24,7 +24,7 @@
  * @author      toKernel development team <framework@tokernel.com>
  * @copyright   Copyright (c) 2017 toKernel
  * @license     http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version     1.3.1
+ * @version     1.4.0
  * @link        http://www.tokernel.com
  * @since       File available since Release 1.0.0
  * @todo        Create functions - sync, compare.
@@ -112,19 +112,9 @@ class ini_lib {
      * Class constructor
      *
      * @access public
-     * @return void
      */
     public function __construct() {
-
         $this->lib = lib::instance();
-
-        $this->ini_arr = array();
-        $this->file = '';
-        $this->is_new_file = false;
-        $this->comment_sign = ';';
-        $this->is_file_read_only = false;
-        $this->have_sections = false;
-        $this->end_of_file = "\n\n" . $this->comment_sign . ' End of file. Last update: ' . date('d-m-Y');
     } // end constructor
 
     /**
@@ -187,7 +177,26 @@ class ini_lib {
     public function __unset($item) {
         $this->item_delete($item);
     }
-
+	
+	/**
+	 * Clone the object
+	 *
+	 * @access protected
+	 * @return void
+	 * @since  1.4.0
+	 */
+	protected function __clone() {
+		
+		$this->ini_arr = array();
+		$this->file = '';
+		$this->is_new_file = false;
+		$this->comment_sign = ';';
+		$this->is_file_read_only = false;
+		$this->have_sections = false;
+		$this->end_of_file = "\n\n" . $this->comment_sign . ' End of file. Last update: ' . date('Y-m-d');
+		
+	} // End func __clone
+    
     /**
      * Load ini file and return cloned instance of this object.
      *
@@ -200,16 +209,19 @@ class ini_lib {
     public function instance($file, $section = NULL, $allow_cnif = false) {
 
         if(!is_readable($file) and $allow_cnif == false) {
+            trigger_error('File `'.$file.'` not readable!', E_USER_ERROR);
             return false;
         }
-
-        $this->__construct();
-
-        if(!$this->file_load($file, $section, $allow_cnif)) {
-            return false;
+	    
+        $obj = clone $this;
+        
+        if(!$obj->file_load($file, $section, $allow_cnif)) {
+	        trigger_error('Unable to load file `'.$file.'`!', E_USER_ERROR);
+	        return false;
         }
 
-        return clone $this;
+        return $obj;
+        
     } // end func instance
 
     /**

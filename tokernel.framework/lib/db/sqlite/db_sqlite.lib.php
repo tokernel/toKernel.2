@@ -22,7 +22,7 @@
  * @package    framework
  * @subpackage library
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @version    1.0.0
  * @link       http://www.tokernel.com
@@ -52,7 +52,6 @@ class db_sqlite_lib extends db_base_lib {
 	 *
 	 * @access public
 	 * @param array $config
-	 * @return void
 	 */
 	public function __construct(array $config) {
 
@@ -542,7 +541,4 @@ class db_sqlite_lib extends db_base_lib {
 
 	} // End func rollback_trans
 
-} // End of class db_sqlite_lib
-
-// End of file
-?>
+} /* End of class db_sqlite_lib */

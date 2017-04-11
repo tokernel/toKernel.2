@@ -546,7 +546,4 @@ class shopping_cart_lib {
 
     } // End func unique_id
 
-} // End of class shopping_cart
-
-// End of file
-?>
+} /* End of class shopping_cart */

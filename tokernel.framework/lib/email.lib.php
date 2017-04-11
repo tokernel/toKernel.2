@@ -22,7 +22,7 @@
  * @package    framework
  * @subpackage library
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @version    2.0.0
  * @link       http://www.tokernel.com
@@ -53,7 +53,6 @@ class email_lib {
 	 * Class constructor
 	 *
 	 * @access public
-	 * @return object
 	 */
 	public function __construct() {
 		$this->lib = lib::instance();
@@ -125,5 +124,4 @@ class email_lib {
 
 	} // End func instance
 
-} // End class email_lib
-?>
+} /* End class email_lib */

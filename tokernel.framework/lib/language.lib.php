@@ -164,11 +164,11 @@ class language_lib {
 		$rep_count_in_str = mb_substr_count($return_val, '%s');
 		$rep_count_in_arr = count($lng_args);
 		
-		if($rep_count_in_str != $rep_count_in_arr) {
+		if($rep_count_in_str > $rep_count_in_arr) {
 			
 			$err_string = htmlspecialchars($item . '='.$return_val);
 			
-			trigger_error('Invalid arguments for translation expression `' . $err_string.'` in ' .
+			trigger_error('Too few arguments for translation expression `' . $err_string.'` in ' .
 				'language file ('.$this->language_file.').', E_USER_NOTICE);
 			
 			return false;
@@ -215,9 +215,5 @@ class language_lib {
 	public function language_prefix() {
 		return $this->language_prefix;
 	}
-	
-	/* End of class language_lib */
-}
 
-/* End of file */
-?>
+} /* End of class language_lib */

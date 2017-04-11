@@ -22,7 +22,7 @@
  * @package    framework
  * @subpackage library
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @version    1.0.0
  * @link       http://www.tokernel.com
@@ -77,7 +77,6 @@ class db_sqlite_query_result_lib {
 	 * @access public
 	 * @param object $sqlite3
 	 * @param object $result
-	 * @return void
 	 */
 	public function __construct($sqlite3, $result) {
 		$this->sqlite3 = $sqlite3;
@@ -258,7 +257,4 @@ class db_sqlite_query_result_lib {
 
 	} // End func free_result
 
-} // End of class db_sqlite_query_result_lib
-
-// End of file
-?>
+} /* End of class db_sqlite_query_result_lib */

@@ -33,27 +33,34 @@
  * Possible rules:
  *
  * 'required' => true, // if set value as false, the validation will passed as true.
- * 'minlength' => 5, // String length should be minimum of 5 characters
- * 'maxlength' => 10, // String length should be maximum of 10 characters
- * 'rangelength' => array(5, 10), // String length should be in range of 5-10 characters
+ * 'min_length' => 5, // String length should be minimum of 5 characters
+ * 'max_length' => 10, // String length should be maximum of 10 characters
+ * 'range_length' => array(5, 10), // String length should be in range of 5-10 characters
  * 'min' => 5, // Number value should be minimum 5
  * 'max' => 10, // Number value should be maximum 10
  * 'range'	=> array(5, 10), // Number value should be in range of 5-10
  * 'equal_to' => 'password', // The value should be equal to value of element named "password" (this is useful for password confirmation)
  * 'different_from' => 'phone1', // The value should be different from value of element named "phone1" (this is useful to except inserting same values in different elements)
  * 'in' => array('home', 'garage', 'office'), // Is equal to one of array elements
+ * 'one_of' => array('phone1', 'phone2', 'phone2'), // Required to enter minimum one of element(s).
  * 'date' => 'Y-m-d', // Date in given format
  * 'date_iso' => true, // Date in ISO standard Y-m-d (i.e. 2014-02-07)
  * 'date_before' => date('Y-m-d'), // Date is earlier than the given date
  * 'date_after' => date('Y-m-d'), // Date is later than the given date
+ * 'date_between' => array('2011-09-22', '2017-04-12'), // Date should be between two dates.
  * 'number' => true, // Any type of number (i.e. 55 | 55.55)
  * 'digits' => true, // Integer number only (i.e. 55)
+ * 'id' => true // Any ID start from 1 (i.e. 1 | 100 | 998547)
  * 'alpha' => true, // String with letters only: a-zA-Z (i.e. abc | ABC | abcXYZ )
  * 'alphanumeric' => true, // String and integer numbers only (i.e. ABC435test546)
  * 'email' => true, // Should be valid Email address
- * 'creditcard' => true, // Should be valid Credit card number (i.e. 378734493671000 | 6011000990139424)
+ * 'credit_card' => true, // Should be valid Credit card number (i.e. 378734493671000 | 6011000990139424)
+ * 'phone_number' => true, // Should be valid phone number (i.e. 818-605-0595 | 8186050595 | 818 605 0595 | 1(818) 605-0595)
  * 'url' => true, // Should be valid URL
  * 'regex' => /^[A-Za-z_]{4,8}$/, // Matches to regular expression pattern
+ * 'multiple' => array(2, 4), // The value should be array and contains 2 - 4 none empty items.
+ * 'multiple' => true, // The value must be an array
+ * 'unique' => true, // This works only with 'multiple' rule and assume, that all element values should be unique.
  *
  * This rule you can use in javascript validation (i.e. jQuery validation plugin).
  *
@@ -62,8 +69,6 @@
  *     'message_manual' => 'This is manual message',
  *     'message_email_already_registered' => 'email',
  * ),
- *
- * @todo add date_between validation
  */
 
 /* Restrict direct access to this file */
@@ -96,38 +101,6 @@ class form_validation_lib {
     protected $app;
 
     /**
-     * Rules reference.
-     *
-     * @access protected
-     * @var array
-     */
-    protected $rules_ref = array(
-        'required',
-        'email',
-        'minlength',
-        'maxlength',
-        'rangelength',
-        'min',
-        'max',
-        'range',
-        'number',
-        'digits',
-        'alpha',
-        'alphanumeric',
-        'url',
-        'creditcard',
-        'date_iso',
-        'date',
-        'date_before',
-        'date_after',
-        'equal_to',
-        'different_from',
-        'in',
-        'regex',
-        'remote' // This rule is possible to use for javascript validation
-    );
-
-    /**
      * Rules array
      *
      * @access protected
@@ -148,10 +121,19 @@ class form_validation_lib {
      *
      * @access protected
      * @var array
-     * @since Version 2.0.0
+     * @since 2.0.0
      */
     protected $rule_custom_messages = array();
-
+	
+	/**
+	 * Data to validate
+	 *
+	 * @access protected
+	 * @var array
+	 * @since Version 2.0.0
+	 */
+	protected $validation_data;
+	
     /**
      * Final validation result
      *
@@ -165,7 +147,6 @@ class form_validation_lib {
      * Class constructor
      *
      * @access public
-     * @return void
      */
     public function __construct() {
         $this->app = app::instance();
@@ -182,30 +163,41 @@ class form_validation_lib {
         $this->rules = array();
         $this->messages = array();
         $this->rule_custom_messages = array();
-        $this->validation_result = true;
-    }
-
-    /**
+    } // end func __destruct
+	
+	/**
+	 * Clone the object
+	 *
+	 * @access protected
+	 * @return void
+	 */
+	protected function __clone() {
+		$this->rules = array();
+		$this->messages = array();
+		$this->rule_custom_messages = array();
+		$this->validation_result = true;
+	}
+	
+	/**
      * Return a new clean instance of this object
      *
      * @access public
      * @param mixed array | NULL $rules
      * @param mixed array | NULL $custom_messages
      * @return object
-     * @since Version 2.0.0
+     * @since 2.0.0
      */
-    public function instance($rules, $custom_messages = array()) {
-
+    public function instance($rules = null, $custom_messages = null) {
+	        	
         $obj = clone $this;
-        $obj->__destruct();
-
+        
         if(!is_null($rules)) {
             $obj->add_rules($rules, $custom_messages);
         }
 
         return $obj;
 
-    } // End func instance
+    } // end func instance
 
     /**
      * Add validation rules
@@ -229,32 +221,55 @@ class form_validation_lib {
      * @return void
      */
     public function add_rules($rules, $custom_messages = array()) {
-        $this->rules = $rules;
+        
+    	$this->rules = $rules;
         $this->rule_custom_messages = $custom_messages;
-    } // End func add_rule
+	    
+    } // end func add_rule
 
     /**
      * Run Form validation
-     * This method can be called ater HTTP request mode checking.
+     * By default the validation process will work with POST request data.
      *
      * @access public
+     * @param string | array $validation_data
      * @return boolean
      */
-    public function run() {
-
+    public function run($validation_data = 'POST') {
+	
+	    // Notice: This can be a name of Request (POST | PUT | DELETE) or an assoc array.
+    	switch($validation_data) {
+		    case 'POST':
+		    case 'PUT':
+		    case 'DELETE':
+			    $this->validation_data = $validation_data;
+			    break;
+		    default:
+		    	if(is_array($validation_data)) {
+				    $this->validation_data = $validation_data;
+			    } else {
+				    trigger_error('Unacceptable validation data type.', E_USER_WARNING);
+				    return false;
+			    }
+	    }
+	            
         foreach($this->rules as $element => $rules) {
+			
+        	$value = $this->get_value($element);
+	        	
             foreach($rules as $rule => $rule_values) {
-                $this->validate_rule($element, $rule, $rule_values);
+				
+				if(isset($rules['multiple'])) {
+					$this->validate_multiple_rule($element, $value, $rule, $rule_values);
+				} else {
+					$this->validate_rule($element, $value, $rule, $rule_values);
+				}
             }
         }
 
-        if(!empty($this->messages)) {
-            return false;
-        }
+		return $this->validation_result;
 
-        return $this->validation_result;
-
-    } // End func run
+    } // end func run
 
     /**
      * Get error messages
@@ -274,8 +289,7 @@ class form_validation_lib {
         }
 
         return false;
-
-    } // End func get_messages
+    } // end func get_messages
 
     /**
      * Print message with html tag for element
@@ -311,8 +325,7 @@ class form_validation_lib {
         echo $messages_str_result;
 
         return true;
-
-    } // End func print_message
+    } // end func print_message
 
     /**
      * Set message for element
@@ -323,221 +336,417 @@ class form_validation_lib {
      * @return void
      */
     public function set_message($element, $message) {
-        $this->messages[$element][] = $message;
-    } // End func set_message
+		$this->messages[$element][] = $message;
+		$this->validation_result = false;
+    } // end func set_message
 
     /**
      * Validate element value and set message
      *
      * @access protected
      * @param string $element
+     * @param mixed $value
      * @param string $rule
      * @param mixed $rule_values
      * @return boolean
      */
-    protected function validate_rule($element, $rule, $rule_values) {
-
-        if(!in_array($rule, $this->rules_ref)) {
-            trigger_error('Rule `'.$rule.'` not exists!', E_USER_WARNING);
-        }
-
-        $value = $this->lib->filter->post($element);
-
+    protected function validate_rule($element, $value, $rule, $rule_values) {
+	     
         // Pass empty value if not marked as required
         if($rule != 'required' and ($value === '' || $value === false)) {
-            return true;
+	        return true;
         }
+	    
+        switch($rule) {
+        	
+        	// Required
+	        case 'required':
+		        // Check rule only if value is true
+		        if($rule_values == false) {
+			        return true;
+		        }
+		
+		        if($this->lib->valid->required($value) == true) {
+			        return true;
+		        }
+		        
+	        	break;
+		
+		    // Minimum length
+	        // @deprecated
+	        case 'minlength':
+	        case 'min_length':
+	            
+	        	if($this->lib->valid->required($value, $rule_values) == true) {
+		            return true;
+	            }
+	            
+	        	break;
+	
+	        // Maximum length
+	        // @deprecated
+	        case 'maxlength':
+	        case 'max_length':
+		
+		        if($this->lib->valid->required($value, -1, $rule_values) == true) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Range length
+	        // @deprecated
+	        case 'rangelength':
+	        case 'range_length':
+		
+		        if($this->lib->valid->required($value, $rule_values[0], $rule_values[1]) == true) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Minimum
+	        case 'min':
+		
+		        if($value >= $rule_values and is_numeric($value)) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Maximum
+	        case 'max':
+		
+		        if($value <= $rule_values and is_numeric($value)) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Range
+	        case 'range':
+		
+		        if($value >= $rule_values[0] and $value <= $rule_values[1] and is_numeric($value)) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Equal to
+	        case 'equal_to':
+		
+		        if($value == $this->get_value($rule_values)) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Different from
+	        case 'different_from':
+		
+		        if($value != $this->get_value($rule_values)) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // In
+	        case 'in':
+		
+		        if(in_array($value, $rule_values)) {
+			        return true;
+		        } else {
+			
+			        /*
+			         * Define message for "in" rule.
+					 * Example:
+					 *
+					 * Rule defined as: 'in' => array('Home', 'Garage', 'Office')
+					 * Will display message as: Possible values to enter is: Home, Garage, Office
+					 */
+			        $rule_values = implode(', ', $rule_values);
+			
+		        }
+		        
+		        break;
+	
+	        // One of
+	        case 'one_of':
+			
+			    foreach($rule_values as $element_name) {
+				    if($this->get_value($element_name) != '') {
+					    return true;
+				    }
+			    }
+		
+		        /*
+				 * Define message for "one_of" rule.
+				 * Example:
+				 *
+				 * Rule defined as: 'one_of' => array('phone1', 'phone2', 'phone3')
+				 * Will display message as: Please enter at least 1 of this elements phone1, phone2, phone3.
+				 */
+			    $rule_values = implode(', ', $rule_values);
+		    
+		        break;
+	
+	        // Date
+	        case 'date':
+		
+		        if($this->lib->valid->date($value, $rule_values) == true) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Date iso
+	        case 'date_iso':
+		
+		        if($this->lib->valid->date_iso($value) == true) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Date before
+	        case 'date_before':
+		
+		        if($this->lib->date->is_passed($value, $rule_values) == false) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Date after
+	        case 'date_after':
+		
+		        if($this->lib->date->is_passed($value, $rule_values) == true) {
+			        return true;
+		        }
+		        
+		        break;
+		        
+		    // Date between
+	        case 'date_between':
+		
+		        if($this->lib->valid->date($value, 'Y-m-d') == true
+			        and
+		        	$this->lib->date->is_passed($value, $rule_values[0]) == true
+			        and
+			        $this->lib->date->is_passed($value, $rule_values[1]) == false) {
+			        
+		        	return true;
+		        }
+		
+		        /*
+				 * Define message for "date_between" rule.
+				 * Example:
+				 *
+				 * Rule defined as: 'one_of' =>  array('2011-09-22', '2017-04-12')
+				 * Will display message as: Please enter date between 2011-09-22 - 2017-04-12.
+				 */
+		        $rule_values = implode(' - ', $rule_values);
+	        	
+	        	break;
+	
+	        // Number
+	        case 'number':
+		
+		        if(is_numeric($value)) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Digits
+	        case 'digits':
+		
+		        if($this->lib->valid->digits($value) == true) {
+			        return true;
+		        }
+		        
+		        break;
+			
+		    // Id
+	        case 'id':
+		
+		        if($this->lib->valid->id($value) == true) {
+			        return true;
+		        }
+		
+		        break;
+	        	
+	        // Alpha
+	        case 'alpha':
+		
+		        if($this->lib->valid->alpha($value) == true) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Alpha-numeric
+	        case 'alphanumeric':
+		
+		        if($this->lib->valid->alpha_numeric($value)) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // E-mail
+	        case 'email':
+		
+		        if($this->lib->valid->email($value) and $value != '') {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Credit card
+	        // @deprecated
+	        case 'creditcard':
+	        case 'credit_card':
+		        if($this->lib->valid->credit_card($value) == true) {
+			        return true;
+		        }
+		        
+		        break;
+	
+		    // Phone number
+	        case 'phone_number':
 
-        // required
-        if($rule == 'required') {
-
-            // Check rule only if value is true
-            if($rule_values == false) {
-                return true;
-            }
-
-            if($this->lib->valid->required($value) == true) {
-                return true;
-            }
-        }
-
-        // minlength
-        if($rule == 'minlength') {
-            if($this->lib->valid->required($value, $rule_values) == true) {
-                return true;
-            }
-        }
-
-        // maxlength
-        if($rule == 'maxlength') {
-            if($this->lib->valid->required($value, -1, $rule_values) == true) {
-                return true;
-            }
-        }
-
-        // rangelength
-        if($rule == 'rangelength') {
-            if($this->lib->valid->required($value, $rule_values[0], $rule_values[1]) == true) {
-                return true;
-            }
-        }
-
-        // min
-        if($rule == 'min') {
-            if($value >= $rule_values and is_numeric($value)) {
-                return true;
-            }
-        }
-
-        // max
-        if($rule == 'max') {
-            if($value <= $rule_values and is_numeric($value)) {
-                return true;
-            }
-        }
-
-        // range
-        if($rule == 'range') {
-            if($value >= $rule_values[0] and $value <= $rule_values[1] and is_numeric($value)) {
-                return true;
-            }
-        }
-
-        // equal_to
-        if($rule == 'equal_to') {
-            if($value == $this->lib->filter->post($rule_values)) {
-                return true;
-            }
-        }
-
-        // different_from
-        if($rule == 'different_from') {
-            if($value != $this->lib->filter->post($rule_values)) {
-                return true;
-            }
-        }
-
-        // in
-        if($rule == 'in') {
-            if(in_array($value, $rule_values)) {
-                return true;
-            } else {
-
-                /* Define message for "in" rule.
-                 * Example:
-                 *
-                 * Rule defined as: 'in' => array('Home', 'Garage', 'Office')
-                 * Will display message as: Possible values to enter is: Home, Garage, Office
-                 */
-                $rule_values = implode(', ', $rule_values);
-
-            }
-        }
-
-        // date
-        if($rule == 'date') {
-            if($this->lib->valid->date($value, $rule_values) == true) {
-                return true;
-            }
-        }
-
-        // date_iso
-        if($rule == 'date_iso') {
-            if($this->lib->valid->date_iso($value) == true) {
-                return true;
-            }
-        }
-
-        // date_before
-        if($rule == 'date_before') {
-            if($this->lib->date->is_passed($value, $rule_values) == false) {
-                return true;
-            }
-        }
-
-        // date_after
-        if($rule == 'date_after') {
-            if($this->lib->date->is_passed($value, $rule_values) == true) {
-                return true;
-            }
-        }
-
-        // number
-        if($rule == 'number') {
-            if(is_numeric($value)) {
-                return true;
-            }
-        }
-
-        // digits
-        if($rule == 'digits') {
-            if($this->lib->valid->digits($value) == true) {
-                return true;
-            }
-        }
-
-        // alpha
-        if($rule == 'alpha') {
-            if($this->lib->valid->alpha($value) == true) {
-                return true;
-            }
-        }
-
-        // alphanumeric
-        if($rule == 'alphanumeric') {
-            if($this->lib->valid->alpha_numeric($value)) {
-                return true;
-            }
-        }
-
-        // email
-        if($rule == 'email') {
-            if($this->lib->valid->email($value) and $value != '') {
-                return true;
-            }
-        }
-
-        // creditcard
-        if($rule == 'creditcard') {
-            if($this->lib->valid->credit_card($value) == true) {
-                return true;
-            }
-        }
-
-        // url
-        if($rule == 'url') {
-            if($this->lib->valid->url($value) == true) {
-                return true;
-            }
-        }
-
-        // regex
-        if($rule == 'regex') {
-            if(preg_match($rule_values, $value) == 1) {
-                return true;
-            }
-        }
-
-        // remote
-        if($rule == 'remote') {
-            // We're not validating this rule here.
-            // It is defined to use in javascript validation
-            return true;
+		        if(in_array(trim(strtr($value, '0123456789', '##########')), $rule_values)) {
+		        	return true;
+		        }
+		        
+	        	break;
+		        
+	        // URL
+	        case 'url':
+		
+		        if($this->lib->valid->url($value) == true) {
+			        return true;
+		        }
+		        
+		        break;
+	
+	        // Regular expression
+	        case 'regex':
+		
+		        if(preg_match($rule_values, $value) == 1) {
+			        return true;
+		        }
+		        
+		        break;
+			
+		    // This rule can be enabled only with multiple rule.
+			case 'unique':
+				trigger_error('Rule `'.$rule.'` is not allowed for non multiple values!', E_USER_WARNING);
+				return false;
+			
+	        default:
+		
+		        trigger_error('Rule `'.$rule.'` not exists!', E_USER_WARNING);
+		        return false;
         }
 
         if(isset($this->rule_custom_messages[$element][$rule])) {
             // Message set by custom messages array.
             // NOTICE: The message should be defined as is, without translation.
-            $this->messages[$element][] = $this->rule_custom_messages[$element][$rule];
+            $this->set_message($element, $this->rule_custom_messages[$element][$rule]);
         } else {
             // Get message from default.
-            $this->messages[$element][] = $this->message_localized($rule, $rule_values);
+            $this->set_message($element, $this->message_localized($rule, $rule_values));
         }
-
-        $this->validation_result = false;
-
+	    
+		return false;
     } // End func validate_rule
 
+	/**
+	 * Validate element with multiple values and set message
+	 *
+     * @access protected
+     * @param string $element
+     * @param mixed $value
+     * @param string $rule
+     * @param mixed $rule_values
+     * @return boolean
+     * @since 2.0.0
+	 */
+	protected function validate_multiple_rule($element, $value, $rule, $rule_values) {
+	
+		if(!is_array($value)) {
+			if($rule != 'multiple' or $rule_values == false) {
+				return true;
+			} else {
+				if(isset($this->rule_custom_messages[$element][$rule])) {
+					$this->set_message($element, $this->rule_custom_messages[$element][$rule]);
+				} else {
+					$this->set_message($element, $this->message_localized($rule.'_non_range', $rule_values));
+				}
+				return false;
+			}
+		}
+		
+		if($rule == 'required') {
+			
+			if($rule_values == false) {
+				return true;
+			}
+			
+			foreach($value as $v) {
+				if(!$this->lib->valid->required($v)) {
+					if(isset($this->rule_custom_messages[$element][$rule])) {
+						$this->set_message($element, $this->rule_custom_messages[$element][$rule]);
+					} else {
+						$this->set_message($element, $this->message_localized($rule, $rule_values));
+					}
+					return false;
+				}
+			}
+			return true;
+		}
+		
+		// remove empty values
+		$value = array_filter($value, function($v) {
+			return (trim($v) !== '');
+		});
+		
+		switch($rule) {
+			case 'multiple':
+				if(!is_array($rule_values) || (count($value) >= $rule_values[0] && count($value) <= $rule_values[1])) {
+					return true;
+				}
+				break;
+			case 'unique':
+				if($value === array_unique($value)) {
+					return true;
+				}
+				break;
+			default:
+				foreach($value as $v) {
+					if(!$this->validate_rule($element, $v, $rule, $rule_values)) {
+						return false;
+					}
+				}
+				return true;
+		}
+		
+		if(isset($this->rule_custom_messages[$element][$rule])) {
+			$this->set_message($element, $this->rule_custom_messages[$element][$rule]);
+		} else {
+			if($rule_values === true) {
+				$this->set_message($element, $this->message_localized($rule));
+			} else {
+				$this->set_message($element, $this->message_localized($rule, $rule_values));
+			}
+		}
+		
+		return false;
+		
+	} // end func validate_multiple_rule
+	
     /**
      * Return translated message
      *
@@ -546,10 +755,53 @@ class form_validation_lib {
      * @param mixed $second_args
      * @return string
      */
+    protected function message_localized($rule, $second_args = array()) {
+    	
+    	if(!is_array($second_args)) {
+    		$second_args = array($second_args);
+    	}
 
-    protected function message_localized($rule, $second_args = NULL) {
         return $this->app->language('_' . $rule, $second_args);
-    }
 
-} // End class form_validation_lib
-?>
+    } // end func message_localized
+	
+	/**
+	 * This is the wrapper method to get value for validation.
+	 * It should be possible to validate any type of data such as:
+	 *
+	 * User defined array,
+	 * Global arrays,
+	 * - POST
+	 * - PUT
+	 * - DELETE
+	 *
+	 * @access protected
+	 * @param string $item
+	 * @return mixed
+	 * @since Version 2.0.0
+	 */
+	protected function get_value($item) {
+		
+		switch($this->validation_data) {
+			case 'POST':
+				$value = $this->lib->filter->post($item);
+				break;
+			case 'PUT':
+				$value = $this->lib->filter->put($item);
+				break;
+			case 'DELETE':
+				$value = $this->lib->filter->delete($item);
+				break;
+			default:
+				if(isset($this->validation_data[$item])) {
+					$value = $this->validation_data[$item];
+				} else {
+					$value = false;
+				}
+		}
+				
+		return $value;
+		
+	} // End func get_value
+	
+} /* End of class form_validation_lib */

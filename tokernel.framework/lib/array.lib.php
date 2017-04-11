@@ -177,8 +177,4 @@ class array_lib {
 
     } // End func is_elements_empty
 
-    /* End of class array_lib */
-}
-
-/* End of file */
-?>
+} /* End of class array_lib */

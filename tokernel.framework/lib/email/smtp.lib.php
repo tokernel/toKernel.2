@@ -22,7 +22,7 @@
  * @package    framework
  * @subpackage library
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @version    1.0.0
  * @link       http://www.tokernel.com
@@ -441,5 +441,4 @@ class smtp_lib extends email_base_lib {
 
 	} // End func write_to_smtp
 
-} // End class smtp_lib
-?>
+} /* End class smtp_lib */

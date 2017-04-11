@@ -287,7 +287,4 @@ class date_lib {
         return false;
     } // end func has_weekend
 
-} // End class date_lib
-
-// End of file
-?>
+} /* End class date_lib */

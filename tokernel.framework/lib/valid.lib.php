@@ -486,8 +486,4 @@ class valid_lib {
 
     } // end func date
 
-    /* End class valid_lib */
-}
-
-/* End of file */
-?>
+} /* End class valid_lib */

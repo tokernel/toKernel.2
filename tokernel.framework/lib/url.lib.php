@@ -22,7 +22,7 @@
  * @package    framework
  * @subpackage library
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @version    4.1.0
  * @link       http://www.tokernel.com
@@ -292,9 +292,16 @@ class url_lib {
 
         // Try to set language from browser if allowed
         if($config->item_get('http_catch_browser_language', 'HTTP') == 1) {
-            $language_prefix = $this->matches_browser_language($this->allowed_languages);
+            
+        	$language_prefix = $this->matches_browser_language($this->allowed_languages);
+            
+        	// Language prefix not match
+            if(!$language_prefix) {
+	            $language_prefix = $config->item_get('http_'.$mode.'_default_language', 'HTTP');
+            }
+            
         }
-
+	    
         $this->language_prefix = $language_prefix;
         $this->language_parsing = $config->item_get('http_parse_language', 'HTTP');
 
@@ -558,7 +565,7 @@ class url_lib {
 
             $tmp = explode('-', $language);
             $prefix = $tmp[0];
-
+	        
             if(in_array($prefix, $allowed_languages)) {
                 return $prefix;
             }
@@ -702,8 +709,4 @@ class url_lib {
         $this->mode = $mode;
     }
 
-    /* End of class url_lib */
-}
-
-/* End of file */
-?>
+} /* End of class url_lib */

@@ -1,0 +1,8 @@
+toKernel FAQ
+
+1. How can I change the /application/ directory name for security purpose.
+	Let's say, that you want to change the application directory name to 'my_app_55'
+	- In the main /index.php file change the constant 'TK_APP_DIR' value to 'my_app_55'.
+	- Rename the /application directory to /my_app_55
+
+2.

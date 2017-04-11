@@ -22,9 +22,9 @@
  * @package    toKernel
  * @subpackage kernel
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    4.1.0
+ * @version    4.2.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */ 
@@ -117,7 +117,7 @@ if(!empty($argc) and php_sapi_name() == 'cli') {
 	if(extension_loaded('zlib') and isset($_SERVER['HTTP_ACCEPT_ENCODING'])) {
 		if(strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false) {
 		   	ob_start("ob_gzhandler");
-		   	ob_start();
+		   	//ob_start(); // @todo figure out this.
 		   	define('TK_GZIP_OUTPUT', true);
 		}
 	}
@@ -268,6 +268,12 @@ tk_e::log_debug('Loading app instance', 'Loader');
  */
 $app = app::instance($argv);
 
+/*
+ * Include hooks
+ */
+require_once(TK_PATH . 'kernel' . TK_DS . 'hooks_base.class.php');
+require_once(TK_APP_PATH . 'hooks' . TK_DS . 'hooks.class.php');
+
 /* 
  * Run application.
  * NOTE: It is possible to call application run function at once in this loader.
@@ -285,4 +291,3 @@ tk_e::log_debug('Memory usage: '.$lib->file->format_size(memory_get_peak_usage()
 tk_e::log_debug('', ':===================== END =====================');
 
 /* End of file */
-?>

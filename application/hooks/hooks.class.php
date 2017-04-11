@@ -145,7 +145,7 @@ class hooks extends hooks_base {
 		
 		// Your code here...
 		// NOTICE: You can do with buffer what you want but with your own risk!
-		// Watching the Sandra music when writing this comment ;)
+		// Listening the music of Sandra now ... ;)
 		
 		return $output_buffer;
 		

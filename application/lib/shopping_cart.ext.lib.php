@@ -35,7 +35,4 @@ class shopping_cart_ext_lib extends shopping_cart_lib {
 
     /* End class shopping_cart_ext_lib */
 
-}
-
-/* End of file */
-?>
+} /* End of class */

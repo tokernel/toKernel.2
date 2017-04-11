@@ -80,10 +80,11 @@
  ------- 
 
  David Ayvazyan     <tokernel@gmail.com>    Founder, Developer
- Arshak Khazaryan   <khazaryan@gmail.com>   Library developer
- Patrick Isbendjian <pi@pisbtech.com>       Documentation editor, library developer
  Karapet Sargsyan   <join04@yahoo.com>      Developer, Tester, Consultant
- 
+ Patrick Isbendjian <pi@pisbtech.com>       Documentation editor, library developer
+ Arshak Khazaryan   <khazaryan@gmail.com>   Library developer
+ Razmik Davoyan     <razmik@davoyan.name>   Library developer
+
  THANKS
  ------
  

@@ -22,11 +22,15 @@
  * @package    framework
  * @subpackage base
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    3.1.0
+ * @version    3.1.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
+ *
+ * @todo       Review comments
+ * @todo       Review/Refactor Debugging.
+ * @todo       Review/Refactor errors/exceptions/trigger_error ...
  */
 
 /* Restrict direct access to this file */
@@ -112,7 +116,15 @@ class module {
      * @var object
      */
     protected $language;
-
+    
+    /**
+     * Module own Language file path if file exists
+     *
+     * @access protected
+     * @var string
+     */
+	protected $language_file;
+	
     /**
      * Module params
      *
@@ -122,18 +134,27 @@ class module {
     protected $params = array();
 
     /**
-     * Parent directory of module
+     * Path of module
+     * This value can be used internally to load views and language files.
      *
+     * @access private
      * @var string
      */
-    protected $parent_dir = '';
-
+    private $path = '';
+	
+	/**
+	 * Parent addon object
+	 *
+	 * @access private
+	 * @var object
+	 */
+    private $parent;
+        
     /**
      * Class Constructor
      *
      * @access public
      * @param array $params
-     * @return void
      */
     public function __construct($params = array()) {
 
@@ -141,32 +162,35 @@ class module {
         $this->lib = lib::instance();
         $this->app = app::instance();
         $this->addons = addons::instance();
-
+	    
+        // Define Parent object
+	    $this->parent = $params['~parent'];
+        
         // Define configuration object
         $this->config = $params['~config'];
 
         // Define Addon's log object
         $this->log = $params['~log'];
-
-        // Define Module, Addon id
-        $this->id = $params['~id'];
-        $this->id_addon = $params['~id_addon'];
-
-        // Define parent directory path.
-        if($params['~parent_dir'] != '') {
-            $this->parent_dir = $params['~parent_dir'] . TK_DS;
-        }
-
-        $this->language = $params['~language'];
-
+	    
+        // Define Language object
+	    $this->language = $params['~language'];
+	    $this->language_file = $params['~language_file'];
+	    
+	    /* Define string values */
+	    $this->id = $params['~id'];
+	    $this->id_addon = $params['~id_addon'];
+	    $this->path = $params['~path'];
+	    
         // Unset temporary value
+	    unset($params['~parent']);
         unset($params['~config']);
         unset($params['~log']);
-        unset($params['~id']);
-        unset($params['~id_addon']);
-        unset($params['~parent_dir']);
         unset($params['~language']);
-
+        unset($params['~language_file']);
+	    unset($params['~id']);
+	    unset($params['~id_addon']);
+	    unset($params['~path']);
+        
         // Set module params
         $this->params = $params;
 
@@ -192,7 +216,7 @@ class module {
         unset($this->language);
 
     } // end destructor
-
+	
     /**
      * Return parent directory of module
      *
@@ -211,8 +235,7 @@ class module {
      * @return mixed
      */
     public function addon() {
-        $parent_addon = $this->id_addon;
-        return $this->addons->$parent_addon;
+    	return $this->parent;
     }
 
     /**
@@ -226,7 +249,7 @@ class module {
      * @return object loaded module
      */
     final public function load_module($id_module, $params = array(), $clone = false) {
-        return $this->addons->load_module($this->id_addon, $id_module, $params, $clone);
+    	return $this->parent->load_module($id_module, $params, $clone);
     }
 
     /**
@@ -240,7 +263,7 @@ class module {
      * @return object loaded model
      */
     final public function load_model($id_model, $instance = NULL, $clone = false) {
-        return $this->addons->load_model($this->id_addon, $id_model, $instance, $clone);
+		return $this->parent->load_model($id_model, $instance, $clone);
     }
 
     /**
@@ -257,11 +280,64 @@ class module {
      * @since 2.1.0
      */
     final public function load_view($file, $vars = array()) {
-
-        $module_dir = $this->parent_dir . $this->id;
-        return $this->addons->load_view($this->id_addon, $module_dir, $file, $vars);
-
+	
+	    tk_e::log_debug('Loading view: Addon: ' . $this->id_addon . ' / Module: '.$this->id.' / view file: ' .$file, 'LOAD VIEW');
+	
+	    // Define view file path
+	    $view_file = $this->view_exists($file);
+	
+	    if(!$view_file) {
+		
+		    trigger_error('View file "' . $file . '" not exists for addon "' . $this->id_addon . ' / Module: '.$this->id.' ".', E_USER_ERROR);
+		    return false;
+	    }
+	
+	    $params = array();
+	
+	    /* Load objects as parameters */
+	    $params['~config'] = & $this->config;
+	    $params['~log'] = & $this->log;
+	    $params['~language'] = & $this->language;
+		    
+	    /* define view file string values */
+	    $params['~id'] = basename($file);
+	    $params['~id_addon'] = $this->id_addon;
+	    $params['~id_module'] = $this->id;
+	    $params['~language_file'] = $this->language_file;
+	    
+	    /* Define new instance of view class */
+	    $view_obj = new view($view_file, $params, $vars);
+	
+	    tk_e::log_debug('Loaded view file "'.$file.'` for addon "'.$this->id_addon.' / Module: '.$this->id.'"'. ' with vars count ' . count($vars) . '`.', __CLASS__.'->'.__FUNCTION__);
+	
+	    // Unset temporary parameters.
+	    unset($params);
+	
+	    /* Return view object */
+	    return $view_obj;
+	    
     } // end func load_view
+	
+	public function view_exists($view_file) {
+		
+		if(trim($view_file) == '') {
+			trigger_error('View name is empty.', E_USER_WARNING);
+		}
+		
+		$view_file = str_replace('/', TK_DS, $view_file);
+		
+		/* Define path for view */
+		$view_file_path = $this->path . $this->id . TK_DS . 'views' . TK_DS . $view_file . '.view.php';
+		
+		/* View file exists in application. */
+		if(is_file($view_file_path)) {
+			return $view_file_path;
+		}
+		
+		/* View file not exists */
+		return false;
+		
+	} // End func view_exists
 
     /**
      * Return true if addon called from backend url or
@@ -292,8 +368,8 @@ class module {
      * @param string $section
      * @return mixed
      */
-    final public function config($item, $section = NULL) {
-        return $this->config->item_get($item, $section);
+    final public function config($item = NULL, $section = NULL) {
+    	return $this->parent->config($item, $section);
     } // end func config
 
     /**
@@ -305,40 +381,43 @@ class module {
     public function id_addon() {
         return $this->id_addon;
     }
-
-    /**
-     * Get language value by expression
-     * Return language prefix if item is null.
-     *
-     * NOTE: From toKernel version 2.0.0 Languages supported only by application.
-     * Modules not supporting own language files.
-     *
-     * @final
-     * @access public
-     * @param string $item
-     * @return string
-     */
-    final public function language($item = NULL) {
-
-        if(is_null($item)) {
-            return $this->app->language();
-        }
-
-        if(func_num_args() > 1) {
-            $l_args = func_get_args();
-
-            unset($l_args[0]);
-
-            if(is_array($l_args[1])) {
-                $l_args = $l_args[1];
-            }
-
-            return $this->language->get($item, $l_args);
-        }
-
-        return $this->language->get($item);
-
-    } // end func language
+	
+	/**
+	 * Return language value by expression
+	 * NOTICE: Not all modules required to have own language object.
+	 * If language file exists in module directory,
+	 * the language object wil be loaded automatically.
+	 *
+	 * Try to return from addon language
+	 * if item not exists in own language or language object not loaded.
+	 *
+	 * Try to return from application language
+	 * if item not exists in own language object.
+	 *
+	 * @access public
+	 * @param string $item
+	 * @param array $lng_args = array()
+	 * @return string
+	 */
+	public function language($item, array $lng_args = array()) {
+		
+		$value = $this->language->get($item, $lng_args);
+				
+		/* Item exists in language object */
+		if($value) {
+			return $value;
+		}
+		
+		/* Module file has own language file loaded and the item not exists.
+		   Now trying to get language value from own addon */
+		if($this->language_file != '') {
+			return $this->parent->language($item, $lng_args);
+		}
+				
+		/* Finally try ot get language value from application language */
+		return $this->app->language($item, $lng_args);
+				
+	} // end func language
 
     /**
      * Return module param by key
@@ -358,8 +437,4 @@ class module {
 
     } // end func param
 
-    /* End of class module */
-}
-
-/* End of file */
-?>
+} /* End of class module */

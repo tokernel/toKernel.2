@@ -22,11 +22,15 @@
  * @package    framework
  * @subpackage base
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @version    1.0.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 2.0.0
+ *
+ * @todo       Review comments
+ * @todo       Review/Refactor Debugging.
+ * @todo       Review/Refactor errors/exceptions/trigger_error ...
  */
 
 /* Restrict direct access to this file */
@@ -100,7 +104,6 @@ class model {
 	 *
 	 * @access public
 	 * @param array $params
-	 * @return void
 	 */
 	public function __construct($params) {
 
@@ -128,8 +131,4 @@ class model {
 
 	} // End func __construct
 
-	/* End of class model */
-}
-
-/* End of file */
-?>
+} /* End of class model */

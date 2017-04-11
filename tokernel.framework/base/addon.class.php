@@ -22,11 +22,13 @@
  * @package    framework
  * @subpackage base
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    4.1.0
+ * @version    6.0.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
+ * @todo       Review/Refactor Debugging.
+ * @todo       Review/Refactor errors/exceptions/trigger_error ...
  */
 
 /* Restrict direct access to this file */
@@ -38,27 +40,26 @@ defined('TK_EXEC') or die('Restricted area.');
  * @author David A. <tokernel@gmail.com>
  */
 abstract class addon {
+	
+	/**
+	 * Main Application object to access
+	 * application provided functionality.
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $app;
+	
+	/**
+	 * Library object to access all libraries.
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $lib;
 
     /**
-     * Library object for working with
-     * libraries in this class
-     *
-     * @var object
-     * @access protected
-     */
-    protected $lib;
-
-    /**
-     * Main Application object for
-     * accessing app functions from this class
-     *
-     * @var object
-     * @access protected
-     */
-    protected $app;
-
-    /**
-     * Main Addons object for accessing all addons
+     * Main Addons objectto access all addons.
      *
      * @var object
      * @access protected
@@ -82,7 +83,7 @@ abstract class addon {
     protected $config;
 
     /**
-     * Addon log instance
+     * Addon log object
      *
      * @var object
      * @access protected
@@ -90,59 +91,91 @@ abstract class addon {
     protected $log;
 
     /**
-     * Addon language
+     * Addon language object
      *
      * @access protected
      * @var object
      */
     protected $language;
-
+	
+	/**
+	 * Parameters set by constructor
+	 *
+	 * @access protected
+	 * @var mixed
+	 */
+	protected $params;
+	
+	/**
+	 * Array of loaded modules (objects).
+	 *
+	 * @access protected
+	 * @staticvar array
+	 */
+	protected static $loaded_modules = array();
+	
+	/**
+	 * Array of loaded models (objects).
+	 *
+	 * @access protected
+	 * @staticvar array
+	 */
+	protected static $loaded_models = array();
+	
+	/**
+	 * Current language prefix
+	 *
+	 * @access protected
+	 * @staticvar string
+	 */
+	private static $language_prefix;
+	
     /**
-     * Addon status
-     * Loaded from framework or application addons directory
-     *
-     * @access protected
-     * @var bool
-     */
-    protected $loaded_from_app_path;
-
-    /**
-     * Class construcor
+     * Class constructor
      *
      * @access public
-     * @param array $params = array()
-     * @return void
+     * @param array $params
      */
     public function __construct($params = array()) {
 
-        // Set main objects
-        $this->lib = lib::instance();
-        $this->app = app::instance();
+        /* Set main objects */
+	    $this->app = app::instance();
+	    $this->lib = lib::instance();
         $this->addons = addons::instance();
-
-        // Set special parameter
-        $this->config = $params['~config'];
-        $this->log = $params['~log'];
-        $this->id = $params['~id'];
-        $this->language = $params['~language'];
-
-        // Unset special parameters from temporary
-        unset($params['~config']);
-        unset($params['~log']);
-        unset($params['~id']);
-        unset($params['~language']);
-
-        // Set parameters
+	    
+        /* Define id_addon */
+        $id_addon = get_class($this);
+        $id_addon = substr($id_addon, 0, -6);
+        
+        $this->id = $id_addon;
+        
+        /* Load config object */
+	    $config_file = TK_APP_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'config' . TK_DS . 'config.ini';
+	    $this->config = $this->lib->ini->instance($config_file, NULL, false);
+        
+	    /* Load log object
+	       Log file extension defined in application configuration file */
+	    $log_ext = $this->app->config('log_file_extension', 'ERROR_HANDLING');
+	    $this->log = $this->lib->log->instance('addon_' . $id_addon . '.' . $log_ext);
+	    
+	    /* Define language prefix */
+	    if(TK_RUN_MODE == 'cli') {
+		    self::$language_prefix = $this->lib->cli->language_prefix();
+	    } else {
+		    self::$language_prefix = $this->lib->url->language_prefix();
+	    }
+	    
+        /* Load language object */
+	    $this->language = $this->lib->language->instance(TK_APP_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'languages' . TK_DS . self::$language_prefix . '.ini');
+        
+        /* Unset temporary variables. */
+	    unset($config_file);
+	    unset($log_ext);
+	    unset($language_prefix);
+	    unset($id_addon);
+	    
+        /* Set parameters */
         $this->params = $params;
-
-        /* Define loaded path */
-        $app_addon_lib = TK_APP_PATH . 'addons' . TK_DS . $this->id . TK_DS . 'lib' . TK_DS . $this->id . '.addon.php';
-
-        if(is_file($app_addon_lib)) {
-            $this->loaded_from_app_path = true;
-        } else {
-            $this->loaded_from_app_path = false;
-        }
 
     } // end constructor
 
@@ -153,151 +186,356 @@ abstract class addon {
      * @return void
      */
     public function __destruct() {
-        unset($this->config);
+        unset($this->id);
+    	unset($this->config);
         unset($this->log);
-        unset($this->params);
         unset($this->language);
+	    unset($this->params);
     } // end destructor
-
+	
+	/**
+	 * Return Module file path if exists.
+	 * Return false if not exists.
+	 *
+	 * @access public
+	 * @param string $id_module
+	 * @return mixed
+	 * @since Version 6.0.0
+	 */
+	public function module_exists($id_module) {
+		
+		/* Check if module id is empty */
+		if(trim($id_module) == '') {
+			trigger_error('Module name is empty! Called in addon `'.$this->id.'`.', E_USER_WARNING);
+			return false;
+		}
+		
+		/* Replace directory separator */
+		$id_module = str_replace('/', TK_DS, $id_module);
+		
+		/* Define module file name. */
+		$module_file = TK_APP_PATH . 'addons' . TK_DS . $this->id . TK_DS . 'modules' . TK_DS . $id_module.'.module.php';
+		
+		/* Module file exists. */
+		if(is_file($module_file)) {
+			return $module_file;
+		}
+		
+		return false;
+		
+	} // end func module exists
+	
     /**
-     * Load and return this addon's module object.
+     * Load Module by id and store into local loaded modules array.
+     * Return Module object if successfully loaded.
+     * Return false on failure.
      *
-     * The Module loading logic.
-     *
-     * Case 1.
-     *      Module exists in framework and not exists in app:
-     *      Load only from framework.
-     *
-     * Case 2.
-     *      Module exists in app and not exists in framework:
-     *      Load only from app.
-     *
-     * Case 3.
-     *      Module exists in both: app and framework:
-     *      Load only from app (override framework).
-     *
-     * Case 4.
-     *      Loaded module from app or from framework,
-     *      but the extended file exists in app.
-     *      Example:
-     *          Module file: /framework/addons/user/modules/manage_profile.module.php
-     *          Module class: class user_manage_profile_module extends module
-     *          Extended file: /app/addons/user/modules/manage_profile.ext.module.php
-     *          Extended class: class user_manage_profile_ext_module extends user_manage_profile_module
-     *
-     *      So, Extended module will be loaded and inherit the parent module file.
-     *      Note: There are no difference if parent module file loaded from framework or app.
-     *
-     * If argument $clone is true, then this will clone and return new object
-     * of module. Else, the module object will returned from loaded modules.
+     * It is possible to load new instance of module object by setting the last argument as true.
      *
      * @final
      * @access public
      * @param string $id_module
      * @param mixed $params
      * @param bool $clone
-     * @return object
+     * @return mixed object | bool
      * @since 4.0.0
      */
     final public function load_module($id_module, $params = array(), $clone = false) {
-
-        return $this->addons->load_module($this->id, $id_module, $params, $clone);
+	    
+    	/* Check if module id is empty */
+	    if(trim($id_module) == '') {
+		    trigger_error('Called load_module with empty id_module in addon `'.$this->id.'`!', E_USER_ERROR);
+		    return false;
+	    }
+	    
+	    /* Define module index
+	       The template is: {id_addon}_{id_module} */
+	    $module_index = $this->id . '_' . basename($id_module);
+	    	
+	    /* Return module object, if it is already loaded
+	       and no cloning required */
+	    if(array_key_exists($module_index, self::$loaded_modules) and $clone == false) {
+		    return self::$loaded_modules[$module_index];
+	    }
+	
+	    /* Get module file path */
+	    $module_file_path = $this->module_exists($id_module);
+	    
+	    /* Check if module file exists and returned */
+	    if(!$module_file_path) {
+		    trigger_error('Module file `' . $id_module . '` not exists for addon `'.$this->id.'`.', E_USER_ERROR);
+		    return false;
+	    }
+		
+	    /* Include module file returned by module_exists() method */
+	    require_once($module_file_path);
+	    
+	    /* Define module class name.
+	       The template is: {id_addon}_{id_module}_module */
+	    $module_class = $module_index . '_module';
+	
+	    /* Return false, if module class not exists */
+	    if(!class_exists($module_class)) {
+		    trigger_error('Module class `'.$module_class.'` not exists in module `'.$module_file_path.'` for addon `'.$this->id.'`.', E_USER_ERROR);
+		    return false;
+	    }
+	
+	    /* Set string params */
+	    $params['~id'] = basename($id_module);
+	    $params['~id_addon'] = $this->id;
+	    $params['~path'] = dirname($module_file_path) . TK_DS;
+	    
+	    /* Set parameters for module constructor by reference */
+	    $params['~parent'] = & $this;
+	    $params['~config'] = & $this->config;
+	    $params['~log'] = & $this->log;
+			    
+	    /* Define module own language file */
+	    $language_file = dirname($module_file_path) . TK_DS . basename($id_module) . TK_DS . 'languages' . TK_DS . self::$language_prefix . '.ini';
+	    
+	    /* Load language object if language file exists for module */
+	    if(is_file($language_file)) {
+	    	
+		    $params['~language'] = $this->lib->language->instance($language_file);
+		    $params['~language_file'] = $language_file;
+	    /* Set own (addon's) language object */
+	    } else {
+		    $params['~language'] = & $this->language;
+		    $params['~language_file'] = '';
+	    }
+	    	    	    
+	    /* Define new module object */
+	    $module = new $module_class($params);
+	
+	    /* Unset temporary parameters. */
+	    unset($params['~id']);
+	    unset($params['~id_addon']);
+	    unset($params['~path']);
+	    
+	    unset($params['~parent']);
+	    unset($params['~config']);
+	    unset($params['~log']);
+	    unset($params['~language']);
+	    	
+	    /* Add module object into loaded modules array if no cloning required. */
+	    if($clone == false) {
+		    self::$loaded_modules[$module_index] = $module;
+	    }
+	    
+	    /* Prepare parameters to debug */
+	    if(is_array($params)) {
+		    $params_ = implode(',', $params);
+	    } else {
+		    $params_ = (string)$params;
+	    }
+	    
+	    tk_e::log_debug('Loaded module: "'.$module_file_path.'" Class: "'.$module_class.'" with params - "' . $params_ .' in addon: `'.$this->id.'`."', get_class($this) . '->' . __FUNCTION__);
+	
+	    /* return module object */
+	    return $module;
 
     } // end func load_module
 
     /**
-     * Load and return this addon's model object.
-     *
-     * The Model loading logic.
-     *
-     * Case 1.
-     *      Model exists in framework and not exists in app:
-     *      Load only from framework.
-     *
-     * Case 2.
-     *      Model exists in app and not exists in framework:
-     *      Load only from app.
-     *
-     * Case 3.
-     *      Model exists in both: app and framework:
-     *      Load only from app (override framework).
-     *
-     * Case 4.
-     *      Loaded Model from app or from framework,
-     *      but the extended file exists in app.
-     *      Example:
-     *          Model file: /framework/addons/user/models/manage.model.php
-     *          Model class: class user_manage_model extends model
-     *          Extended file: /app/addons/user/models/manage.ext.model.php
-     *          Extended class: class user_manage_ext_model extends user_manage_model
-     *
-     *      So, Extended model will be loaded and inherit the parent model file.
-     *      Note: There are no difference if parent model file loaded from framework or app.
-     *
-     * If argument $clone is true, then this will clone and return new object
-     * of model. Else, the model object will returned from loaded models.
-     *
-     * @final
-     * @access public
-     * @param string $id_model
-     * @param mixed $instance
-     * @param bool $clone
-     * @return object
-     * @since 4.0.0
-     */
-    final public function load_model($id_model, $instance = NULL, $clone = false) {
-        return $this->addons->load_model($this->id, $id_model, $instance, $clone);
-    } // end func load_model
-
-    /**
-     * Load view file for addon and return 'view' object.
-     * Include view file from application dir if exists,
-     * else include from framework dir. Return false, if
-     * view file not exists in both directories.
+     * Load view file if exists and return object.
      *
      * @final
      * @access public
      * @param string $file
-     * @param array $vars = array()
-     * @return mixed string | false
+     * @param array $vars
+     * @return mixed object | bool
      * @since 2.0.0
      */
     final public function load_view($file, $vars = array()) {
-        return $this->addons->load_view($this->id, NULL, $file, $vars);
+	
+	    tk_e::log_debug('Loading view: id addon: ' . $this->id . ' / view file: ' .$file, 'LOAD VIEW');
+	
+	    /* Define view file path */
+	    $view_file = $this->view_exists($file);
+	
+	    /* Check if view file exists */
+	    if(!$view_file) {
+		    trigger_error('View file "' . $file . '" not exists for addon "' . $this->id . '".', E_USER_ERROR);
+		    return false;
+	    }
+	
+	    $params = array();
+	
+	    /* Define view required objects by reference */
+	    $params['~config'] = & $this->config;
+	    $params['~log'] = & $this->log;
+	    $params['~language'] = & $this->language;
+	    
+	    /* Define view file ids */
+	    $params['~id'] = basename($file);
+		$params['~id_addon'] = $this->id;
+	    $params['~id_module'] = '';
+	    $params['~language_file'] = '';
+
+	    /* Define new instance of view class */
+	    $view_obj = new view($view_file, $params, $vars);
+	
+	    tk_e::log_debug('Loaded view file "'.$file.'` for addon "'.$this->id.'"'. ' with vars count ' . count($vars) . '`.', __CLASS__.'->'.__FUNCTION__);
+	    	
+	    /* Unset temporary parameters */
+	    unset($params);
+	
+	    /* Return view object */
+	    return $view_obj;
+	
     } // end func load_view
-
-    /**
-     * Return Module path if module exists in framework or app.
-     * If File exists in both, the function will return path from app.
-     * Return false if module not exists.
-     *
-     * @access public
-     * @param string $id_module
-     * @return mixed
-     * @since 4.0.0
-     */
-    public function module_exists($id_module) {
-        return $this->addons->module_exists($this->id, $id_module);
-    } // end func module exists
-
-    /**
-     * Return Model path if model exists in framework or app.
-     * If File exists in both, the function will return path from app.
-     * Return false if model not exists.
-     *
-     * @access public
-     * @param string $id_model
-     * @return mixed
-     * @since 4.0.0
-     */
-    public function model_exists($id_model) {
-        return $this->addons->model_exists($this->id, $id_model);
-    } // end func model exists
+	
+	/**
+	 * Return View file path if exists.
+	 * Return false if not exists.
+	 *
+	 * @access public
+	 * @param string $view_file
+	 * @return mixed
+	 * @since Version 6.0.0
+	 */
+	public function view_exists($view_file) {
+		
+		/* Check if view file name is empty */
+		if(trim($view_file) == '') {
+			trigger_error('View name is empty. Called in addon `'.$this->id.'` ', E_USER_WARNING);
+		}
+		
+		/* Replace directory separators */
+		$view_file = str_replace('/', TK_DS, $view_file);
+		
+		/* Define view file path */
+		$view_file_path = TK_APP_PATH . 'addons' . TK_DS . $this->id . TK_DS . 'views' . TK_DS . $view_file . '.view.php';
+		
+		/* View file exists */
+		if(is_file($view_file_path)) {
+			return $view_file_path;
+		}
+		
+		/* View file not exists */
+		return false;
+		
+	} // End func view_exists
+	
+	/**
+	 * Load Model by id and store into local loaded models array.
+	 * Return Model object if successfully loaded.
+	 * Return false on failure.
+	 *
+	 * It is possible to load new instance of model object by setting the last argument as true.
+	 *
+	 * @final
+	 * @access public
+	 * @param string $id_model
+	 * @param string $instance
+	 * @param bool $clone
+	 * @return mixed object | bool
+	 * @since 6.0.0
+	 */
+	final public function load_model($id_model, $instance = NULL, $clone = false) {
+		
+		/* Check if model id is empty */
+		if(trim($id_model) == '') {
+			trigger_error('Called load_model with empty id_model in addon `'.$this->id.'`!', E_USER_ERROR);
+			return false;
+		}
+		
+		/* Define model index
+	       The template is: {id_addon}_{id_model} */
+		$model_index = $this->id . '_' . basename($id_model);
+		
+		/* Return model object, if it is already loaded and no cloning required */
+		if(array_key_exists($model_index, self::$loaded_models) and $clone == false) {
+			return self::$loaded_models[$model_index];
+		}
+		
+		/* Get Model file */
+		$model_file_path = $this->model_exists($id_model);
+		
+		/* Check if model file exists */
+		if(!$model_file_path) {
+			trigger_error('Model file for `' . $id_model .'` not exists for addon `' . $this->id . '`.', E_USER_ERROR);
+			return false;
+		}
+		
+		/* Include model file returned by model_exists() method */
+		require_once($model_file_path);
+		
+		/* Define model class name.
+	       The template is: {id_addon}_{id_model}_model */
+		$model_class = $model_index . '_model';
+		
+		/* Return false, if model class not exists */
+		if(!class_exists($model_class)) {
+			trigger_error('Model class `' . $model_class .
+				'` not exists in model `'.$model_file_path.'` for addon `'.$this->id.'`.', E_USER_ERROR);
+			return false;
+		}
+		
+		/* Set required values for model */
+		// '~instance' is the section name in configuration file.
+		$params['~instance'] = $instance;
+		$params['~id'] = $id_model;
+		$params['~id_addon'] = $this->id;
+		$params['~language_prefix'] = self::$language_prefix;
+		
+		/* Set objects by reference */
+		$params['~log'] = & $this->log;
+				
+		/* Load new model object */
+		$model = new $model_class($params);
+		
+		/* If no cloning required, add model object to local loaded models array. */
+		if($clone == false) {
+			self::$loaded_models[$model_index] = $model;
+		}
+		
+		tk_e::log_debug('Loaded model: "'.$model_file_path.'" Class: "'.$model_class.'" with instance - "' . $instance .'"', get_class($this) . '->' . __FUNCTION__);
+		
+		/* Unset temporary parameters */
+		unset($params);
+		
+		/* return model object */
+		return $model;
+		
+	} // end func load_model
+	
+	/**
+	 * Return model file path if exists.
+	 * Return false if not exists.
+	 *
+	 * @access public
+	 * @param string $id_model
+	 * @return mixed
+	 * @since Version 6.0.0
+	 */
+	public function model_exists($id_model) {
+		
+		/* Check if model id is empty */
+		if(trim($id_model) == '') {
+			trigger_error('Model name is empty. Addon: `'.$this->id.'`', E_USER_WARNING);
+			return false;
+		}
+		
+		/* Replace directory separators */
+		$id_model = str_replace('/', TK_DS, $id_model);
+		
+		/* Set model filename */
+		$model_file = TK_APP_PATH . 'addons' . TK_DS . $this->id . TK_DS . 'models' . TK_DS . $id_model.'.model.php';
+		
+		/* Model file exists. */
+		if(is_file($model_file)) {
+			return $model_file;
+		}
+		
+		return false;
+	
+    } // end func model_exists
 
     /**
      * Return addon configuration values.
-     * Return config array if item is null nad
-     * section defined, else, return value by item
+     * Return section items as array if item is null and section defined,
+     * else, return value by item
      *
      * @final
      * @access public
@@ -331,129 +569,53 @@ abstract class addon {
     }
 
     /**
-     * Get language value by expression
-     * Return language prefix if item is null.
+     * Return language value by expression
+     *
+     * Try to return from application language
+     * if item not exists in own language object.
      *
      * @access public
      * @param string $item
+     * @param array $lng_args = array()
      * @return string
      */
-    public function language($item) {
-
-        if(is_null($item)) {
-            return $this->app->language();
-        }
-
-        if(func_num_args() > 1) {
-            $l_args = func_get_args();
-
-            unset($l_args[0]);
-
-            if(is_array($l_args[1])) {
-                $l_args = $l_args[1];
-            }
-
-            return $this->language->get($item, $l_args);
-        }
-
-        return $this->language->get($item);
-
+    public function language($item, array $lng_args = array()) {
+	    
+    	/* Try to get value from own language object */
+    	$value = $this->language->get($item, $lng_args);
+    	
+    	/* Item exists in language object */
+    	if($value) {
+    		return $value;
+	    }
+    	
+    	/* Value not exists, try to get from application language */
+	    return $this->app->language($item, $lng_args);
+	    
     } // end func language
 
     /**
-     * Return addon's url by loaded stage
-     * Detect if addon loaded from application directory or from framework.
+     * Return addon url
+     * Example: http://localhost/my_project/application/addons/my_addon
      *
      * @access public
      * @return string
-     * @since 3.2.0
+     * @since 5.0.0
      */
     public function url() {
-        if($this->loaded_from_app_path == true) {
-            return $this->app_url();
-        } else {
-            return $this->tk_url();
-        }
+        return $this->lib->url->base_url() . '/' . TK_APP_DIR . '/addons/' . $this->id . '/';
     }
 
     /**
-     * Return addon's url from application path
+     * Return addon path
+     * Example: /var/www/my_project/application/addons/my_addon/
      *
      * @access public
      * @return string
-     * @since 3.2.0
-     */
-    public function app_url() {
-        if(TK_APP_DIR != '') {
-            return $this->lib->url->base_url() . '/' . TK_APP_DIR . '/addons/' . $this->id;
-        } else {
-            return $this->lib->url->base_url() . '/' . TK_DIR . '/addons/' . $this->id;
-        }
-    }
-
-    /**
-     * Return addon's url from framework path
-     *
-     * @access public
-     * @return string
-     * @since 3.2.0
-     */
-    public function tk_url() {
-        return $this->lib->url->base_url() . TK_DIR . '/addons/' . $this->id;
-    }
-
-    /**
-     * Return addon's path by loaded stage
-     * Detect if addon loaded from application directory or from framework.
-     *
-     * @access public
-     * @return string
-     * @since 3.2.0
+     * @since 5.0.0
      */
     public function path() {
-        if($this->loaded_from_app_path == true) {
-            return $this->app_path();
-        } else {
-            return $this->tk_path();
-        }
-    }
-
-    /**
-     * Return addon's path from application directory
-     *
-     * @access public
-     * @return string
-     * @since 3.2.0
-     */
-    public function app_path() {
-        if(TK_APP_DIR != '') {
-            return TK_ROOT_PATH . TK_APP_DIR . TK_DS .
-            'addons' . TK_DS . $this->id . TK_DS;
-        } else {
-            return TK_ROOT_PATH . 'addons' . TK_DS . $this->id . TK_DS;
-        }
-    }
-
-    /**
-     * Return addon's path from framework directory
-     *
-     * @access public
-     * @return string
-     * @since 3.2.0
-     */
-    public function tk_path() {
-        return TK_PATH . 'addons' . TK_DS . $this->id . TK_DS;
-    }
-
-    /**
-     * Return true if addon loaded from application directory
-     *
-     * @access public
-     * @return bool
-     * @since 3.2.0
-     */
-    public function loaded_from_app_path() {
-        return $this->loaded_from_app_path;
+        return TK_ROOT_PATH . TK_APP_DIR . TK_DS . 'addons' . TK_DS . $this->id . TK_DS;
     }
 
     /**
@@ -483,18 +645,16 @@ abstract class addon {
      * @since 2.2.0
      */
     public function check_backend() {
-
-        if($this->app->config('backend_dir', 'HTTP') != $this->lib->url->backend_dir()) {
-            $this->app->error_404('Cannot call method of class `' .	get_class($this).'` by this url.');
-            return false;
-        }
+	    
+    	if(!$this->is_backend()) {
+		    $this->app->error_404('This action of addon `'.get_class($this).'` allowed to access only from backend!');
+	    }
 
         return true;
     }
 
     /**
-     * Exception for not creating function
-     * 'action_' in any addon class
+     * Except to define action_() method in child classes.
      *
      * @access protected
      * @final
@@ -503,8 +663,7 @@ abstract class addon {
     final protected function action_() {}
 
     /**
-     * Exception for not creating function
-     * 'action_ax_' in any addon class
+     * Except to define action_ax_() method in child classes.
      *
      * @access protected
      * @final
@@ -513,8 +672,7 @@ abstract class addon {
     final protected function action_ax_() {}
 
     /**
-     * Exception for not creating function
-     * 'cli_' in any addon class
+     * Except to define cli_() method in child classes.
      *
      * @access protected
      * @final
@@ -522,8 +680,4 @@ abstract class addon {
      */
     final protected function cli_() {}
 
-    /* End of class addon */
-}
-
-/* End of file */
-?>
+} /* End of class addon */

@@ -22,11 +22,15 @@
  * @package    framework
  * @subpackage base
  * @author     toKernel development team <framework@tokernel.com>
- * @copyright  Copyright (c) 2016 toKernel
+ * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    2.1.1
+ * @version    2.1.2
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
+ *
+ * @todo       Review comments
+ * @todo       Review/Refactor Debugging.
+ * @todo       Review/Refactor errors/exceptions/trigger_error ...
  */
 
 /* Restrict direct access to this file */
@@ -88,6 +92,15 @@ class view {
      * @var object
      */
     protected $language;
+	
+	/**
+	 * Module own Language file path if file exists
+	 * and this is the module's view.
+	 *
+	 * @access protected
+	 * @var string
+	 */
+	protected $language_file;
 
     /**
      * Buffer (html content)
@@ -168,6 +181,10 @@ class view {
         $this->id_addon = $params['~id_addon'];
         $this->id_module = $params['~id_module'];
         $this->language = $params['~language'];
+        
+        /* This assumes if the file path is not empty,
+           this view file loaded by module and language file exists for module */
+        $this->language_file = $params['~language_file'];
 
         // Unset temporary params
         unset($params);
@@ -205,12 +222,22 @@ class view {
      * @return mixed
      */
     public function __get($var) {
-        if(isset($this->variables[$var])) {
+        
+    	if(isset($this->variables[$var])) {
             return $this->variables[$var];
-        } else {
-            trigger_error('Undefined item `' . $var . '` in view object!`', E_USER_NOTICE);
-            return NULL;
         }
+        	
+        $message = 'Undefined variable `'.$var.'` in view object. ';
+        $message .= 'Addon: ' . $this->id_addon;
+        	
+        if($this->id_module != '') {
+        	$message .= ' Module: ' . $this->id_module;
+	    }
+        	
+		trigger_error($message, E_USER_NOTICE);
+        	
+        return NULL;
+                
     } // end func __get
 
     /**
@@ -268,7 +295,7 @@ class view {
      */
     public function reset() {
         $this->variables = array();
-        $this->_buffer = NULL;
+        $this->_buffer = '';
     }
 
     /**
@@ -333,10 +360,12 @@ class view {
      * Call Interpreter and echo the content.
      *
      * @access public
+     * @param array | null $variables
      * @return void
+     * @since version 2.1.2
      */
-    public function show() {
-        echo $this->run();
+    public function show($variables = array()) {
+        echo $this->run($variables);
     }
 
     /**
@@ -348,25 +377,26 @@ class view {
      */
     public function run($variables = array()) {
 
+        /* Merge all variables to parse */
+        $this->variables = array_merge(
+            $this->app->get_vars(),
+            $this->variables,
+            $variables
+        );
+	    
         ob_start();
 
         require($this->file);
 
         $this->_buffer .= ob_get_contents();
+	    
         ob_end_clean();
 
-        /* Merge all variables to parse */
-        $vars = array_merge(
-            $this->app->get_vars(),
-            $this->variables,
-            $variables
-        );
-
         /* Replace all variables */
-        if(!empty($vars)) {
-            foreach($vars as $var => $value) {
-                // Convert only string or integer values.
-                if(is_string($value) or is_numeric($value)) {
+        if(!empty($this->variables)) {
+            foreach($this->variables as $var => $value) {
+                // Convert only scalar.
+                if(is_scalar($value)) {
                     $this->_buffer = str_replace('{var.'.$var.'}', $value, $this->_buffer);
                 }
             }
@@ -379,56 +409,58 @@ class view {
         return $this->_buffer;
 
     } // End func run
+	
+	/**
+	 * Return language value by expression
+	 * NOTICE: Not all modules required to have own language object.
+	 * If language file exists in module directory,
+	 * the language object wil be loaded automatically.
+	 *
+	 * Try to load from Application
+	 *
+	 * Try to return from application language
+	 * if item not exists in own language object.
+	 *
+	 * @access public
+	 * @param string $item
+	 * @param array $lng_args = array()
+	 * @return string
+	 */
+	public function language($item, array $lng_args = array()) {
+		
+		/* Try to get value from own language object
+		   The language object can be owned by addon or module depends on module language file exists */
+		$value = $this->language->get($item, $lng_args);
+		
+		/* Item exists in own language object */
+		if($value) {
+			return $value;
+		}
+		
+		/* Check if this is view file of module and the language file owned by module,
+		   than try to get language value from addon */
+		if($this->language_file != '') {
+			$id_addon = $this->id_addon;
+			return $this->addons->$id_addon->language($item, $lng_args);
+		}
+		
+		/* Finally try ot get language expression from application language */
+		return $this->app->language($item, $lng_args);
+		
+	} // end func language
+	
+	/**
+	 * Return addon configuration values
+	 *
+	 * @final
+	 * @access public
+	 * @param string $item
+	 * @param string $section
+	 * @return mixed
+	 */
+	final public function config($item = NULL, $section = NULL) {
+		$id_addon = $this->id_addon;
+		return $this->addons->$id_addon->config($item, $section);
+	} // end func config
 
-    /**
-     * Get language value by expression
-     * Return language prefix if item is null.
-     *
-     * NOTE: From toKernel version 2.0.0 Languages supported only by application.
-     * Addons and Modules not supporting own language files.
-     *
-     * @final
-     * @access public
-     * @param string $item
-     * @return string
-     */
-    final public function language($item = NULL) {
-
-        if(is_null($item)) {
-            return $this->app->language();
-        }
-
-        if(func_num_args() > 1) {
-            $l_args = func_get_args();
-
-            unset($l_args[0]);
-
-            if(is_array($l_args[1])) {
-                $l_args = $l_args[1];
-            }
-
-            return $this->language->get($item, $l_args);
-        }
-
-        return $this->language->get($item);
-
-    } // end func language
-
-    /**
-     * Return addon configuration values
-     *
-     * @final
-     * @access public
-     * @param string $item
-     * @param string $section
-     * @return mixed
-     */
-    final public function config($item = NULL, $section = NULL) {
-        return $this->config->item_get($item, $section);
-    } // end func config
-
-    /* End of class view */
-}
-
-/* End of file */
-?>
+} /* End of class view */

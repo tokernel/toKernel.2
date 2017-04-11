@@ -256,13 +256,7 @@ abstract class app_core {
 	mb_internal_encoding(self::$instance->config->item_get('app_charset', 'APPLICATION'));
 
 	/* Load language object for application */
-	self::$instance->language = self::$instance->lib->language->instance(
-    					$language_prefix, 
-    					array(
-						    TK_APP_PATH . 'languages' . TK_DS
-     						), 
-     					'application',	
-     					true);
+	self::$instance->language = self::$instance->lib->language->instance(TK_APP_PATH . 'languages' . TK_DS . $language_prefix . '.ini');
 
 	tk_e::log_debug('Loaded "language" object', 'app::' . __FUNCTION__);
      					
@@ -435,8 +429,4 @@ abstract class app_core {
  	
  } // end func timezones 
  
-/* End of class app_core */ 
-} 
-
-/* End of file */
-?>
+} /* End of class app_core */

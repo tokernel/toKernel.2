@@ -39,62 +39,58 @@ defined('TK_EXEC') or die('Restricted area.');
  */
 class hooks_base {
 	
-/**
- * Library object for working with 
- * libraries in this class
- * 
- * @var object
- * @access protected
- */ 
- protected $lib;
-
-/**
- * Main Addons object for accessing all addons
- *
- * @var object
- * @access protected
- */
- protected $addons;
-
-/**
- * Main Application object for 
- * accessing app functions from this class
- * 
- * @var object
- * @access protected
- */ 
- protected $app;
-   	
-/**
- * Status of hooks loaded
- * 
- * @access private
- * @staticvar bool
- */	
- private static $_loaded = false;
+	/**
+	 * Library object for working with
+	 * libraries in this class
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $lib;
 	
-/**
- * Class constructor
- * 
- * @access public
- */
- public function __construct() {
-
- 	/* Check, is hooks is already loaded */
-	if(self::$_loaded == true) {
-		trigger_error('Hooks is already loaded in app::run().', E_USER_ERROR);
-	}
+	/**
+	 * Main Addons object for accessing all addons
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $addons;
+	
+	/**
+	 * Main Application object for
+	 * accessing app functions from this class
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $app;
+	
+	/**
+	 * Status of hooks loaded
+	 *
+	 * @access private
+	 * @staticvar bool
+	 */
+	private static $_loaded = false;
+	
+	/**
+	 * Class constructor
+	 *
+	 * @access public
+	 */
+	public function __construct() {
 		
-	$this->lib = lib::instance();
-	$this->app = app::instance();
-	$this->addons = addons::instance();
-
-	self::$_loaded = true;
+		/* Check, is hooks is already loaded */
+		if(self::$_loaded == true) {
+			trigger_error('Hooks is already loaded in app::run().', E_USER_ERROR);
+		}
+		
+		$this->lib = lib::instance();
+		$this->app = app::instance();
+		$this->addons = addons::instance();
+		
+		self::$_loaded = true;
+		
+	} // end constructor
 	
- } // end constructor
-	
-/* End of class hooks */
-}
-
-/* End of file */
-?>
+} /* End of class hooks */

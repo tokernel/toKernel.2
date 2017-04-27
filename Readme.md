@@ -1,7 +1,7 @@
 
  toKernel - Universal PHP Framework
  ==================================
- Join our online chat at [![Gitter](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/toKernel/Lobby)
+ [![Gitter](https://badges.gitter.im/gitterHQ/gitter.svg)](https://gitter.im/toKernel/Lobby)
 
 
  License GNU GPL <https://www.gnu.org/licenses/gpl.html>  

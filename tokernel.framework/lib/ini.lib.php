@@ -24,7 +24,7 @@
  * @author      toKernel development team <framework@tokernel.com>
  * @copyright   Copyright (c) 2017 toKernel
  * @license     http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version     1.4.0
+ * @version     1.3.1
  * @link        http://www.tokernel.com
  * @since       File available since Release 1.0.0
  * @todo        Create functions - sync, compare.
@@ -203,22 +203,13 @@ class ini_lib {
      * @access public
      * @param string $file
      * @param string $section
-     * @param bool $allow_cnif
+     * @param bool $create_if_not_exists
      * @return mixed object | bool
      */
-    public function instance($file, $section = NULL, $allow_cnif = false) {
+    public function instance($file, $section = NULL, $create_if_not_exists = false) {
 
-        if(!is_readable($file) and $allow_cnif == false) {
-            trigger_error('File `'.$file.'` not readable!', E_USER_ERROR);
-            return false;
-        }
-	    
         $obj = clone $this;
-        
-        if(!$obj->file_load($file, $section, $allow_cnif)) {
-	        trigger_error('Unable to load file `'.$file.'`!', E_USER_ERROR);
-	        return false;
-        }
+        $obj->file_load($file, $section, $create_if_not_exists);
 
         return $obj;
         
@@ -230,21 +221,28 @@ class ini_lib {
      * @access public
      * @param string $file
      * @param string $section
-     * @param bool $allow_cnif
+     * @param bool $create_if_not_exists
      * @return bool
      */
-    public function file_load($file, $section = NULL, $allow_cnif = false) {
+    public function file_load($file, $section = NULL, $create_if_not_exists = false) {
 
-        if(!is_readable($file) and $allow_cnif == false) {
-            return false;
+        // If file doesn't exists and trying to load as not new
+    	if(!is_readable($file) and $create_if_not_exists == false) {
+	        trigger_error('File `'.$file.'` not readable!', E_USER_ERROR);
+        	return false;
         }
-
+	    
+        // If file doesn't exist then create new instance
         if(!is_readable($file)) {
-            $this->file = $file;
+            
+        	$this->file = $file;
             $this->is_new_file = true;
+	
+	        $this->section_set($section);
+		        
             return true;
         }
-
+        
         $lines = file($file, FILE_IGNORE_NEW_LINES);
 
         $this->file = $file;
@@ -256,8 +254,8 @@ class ini_lib {
             $line = trim($line);
 
             // Define section
-            if(substr($line, 0, 1) == '[' and substr($line, -1) == ']') {
-
+	        if($this->is_section($line)) {
+            
                 // Get section name
                 $tmp_section = trim(substr($line, 1, -1));
 
@@ -305,7 +303,8 @@ class ini_lib {
         }
 
         if(!$this->section_exists($section)) {
-            return false;
+            trigger_error("Section `".$section."' doesn't exists to load.", E_USER_ERROR);
+        	return false;
         }
 
         $tmp_arr = $this->ini_arr[$section];

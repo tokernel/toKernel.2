@@ -52,7 +52,6 @@ class db_mysql_lib extends db_base_lib {
 	 *
 	 * @access public
 	 * @param array $config
-	 * @return void
 	 */
 	public function __construct(array $config) {
 		

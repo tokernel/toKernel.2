@@ -82,7 +82,7 @@ class db_lib {
 		}
 		
 		// Set Configuration file path.
-		$conf_ini_file_path = TK_APP_PATH . 'config' . TK_DS . TK_DB_CONFIG_INI;
+		$conf_ini_file_path = TK_APP_PATH . 'config' . TK_DS . $this->conn_ini_file;
 		
 		// Load configuration object
 		$config_ini_obj = $this->lib->ini->instance($conf_ini_file_path, $config_section_name, false);

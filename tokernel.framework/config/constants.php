@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    2.0.0
+ * @version    2.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -33,7 +33,7 @@
 defined('TK_EXEC') or die('Restricted area.');
 
 /* Required PHP Version for toKernel */
-define('TK_PHP_VERSION_REQUIRED', '5.4.0');
+define('TK_PHP_VERSION_REQUIRED', '5.6');
 
 /* Project short name */
 define('TK_SHORT_NAME', 'toKernel');
@@ -65,5 +65,8 @@ define('TK_EMAIL_CONFIG_INI', 'email.ini');
 
 /* Name of Caching configuration file */
 define('TK_CACHING_CONFIG_INI', 'caching.ini');
+
+/* Name of File transfer configuration file */
+define('TK_FILE_TRANSFER_INI', 'file_transfer.ini');
 
 /* End of file */

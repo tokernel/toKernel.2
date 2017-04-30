@@ -190,7 +190,7 @@ require(TK_PATH . 'kernel'.TK_DS.'e.'.TK_RUN_MODE.'.class.php');
  * They will be reconfigured on application instance loading.
  */
 set_exception_handler(array('tk_e', 'exception'));
-set_error_handler(array('tk_e', 'error'));
+set_error_handler(array('tk_e', 'exception_error_handler'));
 
 /*
  * Set shutdown handler.

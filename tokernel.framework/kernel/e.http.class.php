@@ -166,7 +166,7 @@ class tk_e extends tk_e_core {
 	 * @return bool
 	 */
 	public static function error($err_code, $err_message, $file = NULL, $line = NULL) {
-		
+			
 		$error_group = self::get_error_group($err_code);
 		self::log($err_message, $err_code, $file, $line);
 		
@@ -191,6 +191,18 @@ class tk_e extends tk_e_core {
 		return true;
 		
 	} // end func error
+	
+	/**
+	 * @todo finish this
+	 */
+	public static function exception_error_handler($severity, $message, $file, $line) {
+		
+		self::$error_displayed = true;
+		$error_group = self::get_error_group($severity);
+		self::log($message, $severity, $file, $line);
+		throw new ErrorException($message, 0, $severity, $file, $line);
+		return true;
+	}
 	
 	/**
 	 * Shutdown handler

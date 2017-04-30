@@ -163,27 +163,41 @@ class tk_e extends tk_e_core {
 		
 		$error_group = self::get_error_group($err_code);
 		self::log($err_message, $err_code, $file, $line);
+						
+		if(!self::$config['show_notices'] and $error_group == 'notice') {
+			return false;
+		}
 		
+		if(!self::$config['show_warnings'] and $error_group == 'warning') {
+			return false;
+		}
+		
+		if(!self::$config['show_errors'] and $error_group == 'error') {
+			return false;
+		}
+		
+		if(!self::$config['show_unknown_errors'] and $error_group == 'unknown') {
+			return false;
+		}
+				
 		$trace = debug_backtrace(false);
-		
-		if(self::$config['show_notices'] == true and $error_group == 'notice') {
-			self::show_error($err_code, $err_message, $file, $line, $trace);
-		}
-		
-		if(self::$config['show_warnings'] == true and $error_group == 'warning') {
-			self::show_error($err_code, $err_message, $file, $line, $trace);
-		}
-		
-		if(self::$config['show_errors'] == true and $error_group == 'error') {
-			self::show_error($err_code, $err_message, $file, $line, $trace);
-		}
-		
-		if(self::$config['show_unknown_errors'] == true and $error_group == 'unknown') {
-			self::show_error($err_code, $err_message, $file, $line, $trace);
-		}
+		self::show_error($err_code, $err_message, $file, $line, $trace);
 		
 		return true;
+		
 	} // end func error
+	
+	/**
+	 * @todo finish this
+	 */
+	public static function exception_error_handler($severity, $message, $file, $line) {
+	
+		self::$error_displayed = true;
+		$error_group = self::get_error_group($severity);
+		self::log($message, $severity, $file, $line);
+		throw new ErrorException($message, 0, $severity, $file, $line);
+		return true;
+	}
 	
 	/**
 	 * Shutdown handler
@@ -196,8 +210,12 @@ class tk_e extends tk_e_core {
 		
 		$error = error_get_last();
 		
+		if($error !== NULL and self::$error_displayed === true) {
+			self::log($error['message'], $error['type'], $error['file'], $error['line']);
+			exit(1);
+		}
+		
 		if($error !== NULL and self::$error_displayed === false) {
-			
 			self::error($error['type'], $error['message'], $error['file'], $error['line']);
 			exit(1);
 		}

@@ -43,9 +43,9 @@ class generator_lib {
 	 * Create random generated number
 	 *
 	 * @access public
-	 * @param int $length
+	 * @param  int $length
 	 * @return int
-	 * @since 1.1.0
+	 * @since  1.1.0
 	 */
 	public function create_number($length) {
 
@@ -59,11 +59,10 @@ class generator_lib {
 	 * Create random generated password
 	 *
 	 * @access public
-	 * @param int $min
-	 * @param int $max
-	 * @param bool $uppercase
+	 * @param  int $min
+	 * @param  int $max
+	 * @param  bool $uppercase
 	 * @return string
-	 * @since 1.0.0
 	 */
 	public function create_password($min = 6, $max = 15, $uppercase = true) {
 
@@ -75,10 +74,9 @@ class generator_lib {
 	 * Create random generated username
 	 *
 	 * @access public
-	 * @param int $min
-	 * @param int $max
+	 * @param  int $min
+	 * @param  int $max
 	 * @return string
-	 * @since 1.0.0
 	 */
 	public function create_username($min = 6, $max = 12) {
 
@@ -98,9 +96,8 @@ class generator_lib {
 	 * Create random generated email address
 	 *
 	 * @access public
-	 * @param string $domain = NULL
+	 * @param  string $domain = NULL
 	 * @return string
-	 * @since 1.0.0
 	 */
 	public function create_email($domain = NULL) {
 
@@ -125,9 +122,8 @@ class generator_lib {
 	 * Create random generated domain name
 	 *
 	 * @access public
-	 * @param string $country = NULL
+	 * @param  string $country = NULL
 	 * @return string
-	 * @since 1.0.0
 	 */
 	public function create_domain($country = NULL) {
 
@@ -154,14 +150,13 @@ class generator_lib {
 	 * Create random string a-z, A-Z, 0-9, and symbols.
 	 *
 	 * @access public
-	 * @param int $min
-	 * @param int $max
-	 * @param bool $uppercase = true
-	 * @param bool $numbers = true
-	 * @param bool $symbols = true
-	 * @param string $chars_allowed = NULL
+	 * @param  int $min
+	 * @param  int $max
+	 * @param  bool $uppercase = true
+	 * @param  bool $numbers = true
+	 * @param  bool $symbols = true
+	 * @param  string $chars_allowed = NULL
 	 * @return string
-	 * @since 1.0.0
 	 */
 	public function create_string($min = 6, $max = 12, $uppercase = true, $numbers = true, $symbols = true, $chars_allowed = NULL) {
 
@@ -224,9 +219,8 @@ class generator_lib {
 	 * Create random sentence by given text.
 	 *
 	 * @access public
-	 * @param string $str
+	 * @param  string $str
 	 * @return string
-	 * @since 1.0.0
 	 */
 	public function create_sentence($str = NULL) {
 

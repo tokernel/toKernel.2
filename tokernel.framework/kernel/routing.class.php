@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.0.0
+ * @version    2.0.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 2.0.0
  */
@@ -38,7 +38,7 @@ defined('TK_EXEC') or die('Restricted area.');
  * @author David A. <tokernel@gmail.com>
  */
 class routing {
-
+		
 	/**
 	 * Library object for working with
 	 * libraries in this class
@@ -55,7 +55,23 @@ class routing {
 	 * @var array
 	 */
 	private static $args;
-
+	
+	/**
+	 * Routes configuration object
+	 *
+	 * @access private
+	 * @var object
+	 */
+	private static $routes_ini;
+	
+	/**
+	 * Status of this object initialization
+	 *
+	 * @access private
+	 * @var bool
+	 */
+	private static $initialized = false;
+	
 	/**
 	 * Parse routing
 	 *
@@ -65,18 +81,17 @@ class routing {
 	 * @return array|bool
 	 */
 	static public function parse($q_arr) {
-
-		// Define main library object if not loaded
-		if(!is_object(self::$lib)) {
+		
+		if(!self::$initialized) {
 			self::$lib = lib::instance();
+			// Load routes initialization file
+			self::$routes_ini = self::$lib->ini->instance(TK_APP_PATH . 'config' . TK_DS . TK_ROUTES_INI);
 		}
-
+		
 		// Cleanup array values
 		$q_arr = self::clean($q_arr);
 
-		// Load routes initialization file
-		$routes_obj = self::$lib->ini->instance(TK_APP_PATH . 'config' . TK_DS . TK_ROUTES_INI);
-		$routes = $routes_obj->section_get('ROUTING');
+		$routes = self::$routes_ini->section_get('ROUTING');
 		$nqs = array();
 
 		// Parse each route to detect matching
@@ -95,6 +110,8 @@ class routing {
 		}
 
 		self::$args = $nqs;
+		self::$initialized = true;
+		
 		return $q_arr;
 
 	} // End func parse

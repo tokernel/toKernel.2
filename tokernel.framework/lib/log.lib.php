@@ -220,9 +220,9 @@ class log_lib {
 	 * $file argument must be set without path.
 	 *
 	 * @access public
-	 * @param string $file
+	 * @param  string $file
 	 * @return bool
-	 * @since 1.1.0
+	 * @since  1.1.0
 	 */
 	public function file_remove($file) {
 		

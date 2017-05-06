@@ -60,7 +60,6 @@ class lib {
 	 *
 	 * @final
 	 * @access private
-	 * @return void
 	 */
 	final private function __construct() {}
 	
@@ -184,9 +183,9 @@ class lib {
 	 * Return false, if library not exists.
 	 *
 	 * @access public
-	 * @param string $lib_name
+	 * @param  string $lib_name
 	 * @return mixed
-	 * @since 2.0.0
+	 * @since  2.0.0
 	 */
 	public function exist($lib_name) {
 		

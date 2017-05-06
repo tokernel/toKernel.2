@@ -160,12 +160,12 @@ class valid_lib {
      * 3  = acceptable
      * 4  = strong
      *
-     * @since 1.1.0
      * @access public
-     * @param string $data
-     * @param integer $min
-     * @param integer $max
+     * @param  string $data
+     * @param  integer $min
+     * @param  integer $max
      * @return int
+     * @since  1.1.0
      */
     public function password_strength($data, $min = 6, $max = 128) {
 
@@ -377,11 +377,11 @@ class valid_lib {
      * Check data with required length.
      *
      * @access public
-     * @param string $data
-     * @param int $min
-     * @param int $max
+     * @param  string $data
+     * @param  int $min
+     * @param  int $max
      * @return bool
-     * @since 1.2.0
+     * @since  1.2.0
      */
     public function required($data, $min = -1, $max = -1) {
 
@@ -409,9 +409,9 @@ class valid_lib {
      * Check is valid url
      *
      * @access public
-     * @param string $data
+     * @param  string $data
      * @return bool
-     * @since 1.3.0
+     * @since  1.3.0
      */
     public function url($data) {
 
@@ -432,9 +432,9 @@ class valid_lib {
      * Format: YYYY-MM-DD (eg 1997-07-16)
      *
      * @access public
-     * @param string $data
+     * @param  string $data
      * @return bool
-     * @since 1.3.0
+     * @since  1.3.0
      */
     public function date_iso($data) {
 
@@ -456,10 +456,10 @@ class valid_lib {
      * Check is valid date in given format(s)
      *
      * @access public
-     * @param string $data
-     * @param string|array $format
+     * @param  string $data
+     * @param  string|array $format
      * @return bool
-     * @since 1.4.0
+     * @since  1.4.0
      */
     public function date($data, $format = 'Y-m-d') {
 

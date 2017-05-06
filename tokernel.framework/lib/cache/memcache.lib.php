@@ -198,7 +198,7 @@ class memcache_lib extends cache_base_lib {
 	 *
 	 * @access public
 	 * @return array
-	 * @since 1.1.0
+	 * @since  1.1.0
 	 */
 	public function stats() {
 		return $this->memcache->getStats();

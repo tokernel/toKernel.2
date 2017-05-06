@@ -127,10 +127,10 @@ class array_lib {
      * Return array key by position
      *
      * @access public
-     * @param array $arr
-     * @param int $pos
+     * @param  array $arr
+     * @param  int $pos
      * @return mixed
-     * @since version 1.1.0
+     * @since  1.1.0
      */
     public function key_by_pos(array $arr, $pos) {
 

@@ -236,7 +236,7 @@ class filecache_lib extends cache_base_lib {
 	 *
 	 * @access public
 	 * @return mixed array | bool
-	 * @since 2.1.0
+	 * @since  2.1.0
 	 */
 	public function stats() {
 		

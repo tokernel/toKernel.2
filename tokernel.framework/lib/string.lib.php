@@ -43,9 +43,8 @@ class string_lib {
 	 * Change any url to url tag
 	 *
 	 * @access public
-	 * @param string $string
+	 * @param  string $string
 	 * @return string
-	 * @since 1.0.0
 	 */
 	function url2tag($string) {
 
@@ -69,7 +68,6 @@ class string_lib {
 	 * @param int $char_count
 	 * @param bool $suspension_points = true
 	 * @return string
-	 * @since 1.0.0
 	 */
 	public function head($str, $char_count, $suspension_points = true) {
 
@@ -114,7 +112,6 @@ class string_lib {
 	 * @param string $str
 	 * @param int $char_count
 	 * @return string
-	 * @since 1.0.0
 	 */
 	public function tail($str, $char_count) {
 

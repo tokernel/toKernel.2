@@ -506,7 +506,7 @@ class file_lib {
      * @access public
      * @param string $size
      * @return int
-     * @since Version 1.4.0
+     * @since 1.4.0
      */
     public function formatted_size_to_bytes($size) {
 
@@ -530,7 +530,7 @@ class file_lib {
      *
      * @access public
      * @return int
-     * @since Version 1.4.0
+     * @since 1.4.0
      */
     public function file_upload_max_size() {
 

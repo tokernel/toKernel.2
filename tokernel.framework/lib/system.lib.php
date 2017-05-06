@@ -27,7 +27,8 @@
  * @version    1.0.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
- * @todo	   Add more functions to this class
+ * @todo	   Develop methods to get more information about system.
+ * @todo       Check if apache loaded. (Define which web server runs).
  */
 
 /* Restrict direct access to this file */

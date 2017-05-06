@@ -27,6 +27,7 @@
  * @version    2.0.1
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
+ * @deprecated Instead of this library you have to use $this->response->... $this->request->...
  */
 
 /* Restrict direct access to this file */

@@ -223,7 +223,7 @@ class addons {
 	 *
 	 * @access public
 	 * @return array
-     * @since Version 2.0.0
+     * @since  2.0.0
 	 */
 	public function all() {
 
@@ -244,9 +244,9 @@ class addons {
 	 * If addon not exists false will be returned.
 	 *
 	 * @access public
-	 * @param string $id_addon
+	 * @param  string $id_addon
 	 * @return mixed
-	 * @since 2.0.0
+	 * @since  2.0.0
 	 */
 	public function exist($id_addon) {
 		

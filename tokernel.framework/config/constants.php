@@ -69,4 +69,7 @@ define('TK_CACHING_CONFIG_INI', 'caching.ini');
 /* Name of File transfer configuration file */
 define('TK_FILE_TRANSFER_INI', 'file_transfer.ini');
 
+/* Name of HTTP status codes reference file */
+define('TK_HTTP_STATUS_CODES_INI', 'status_codes.ini');
+
 /* End of file */

@@ -65,9 +65,9 @@ class image_lib {
 	 * Return Instance of Image library with loaded image file.
 	 *
 	 * @access public
-	 * @param string $src_file
+	 * @param  string $src_file
 	 * @return mixed bool | object image_lib
-	 * @since 2.0.0
+	 * @since  2.0.0
 	 */
 	public function instance($src_file) {
 		

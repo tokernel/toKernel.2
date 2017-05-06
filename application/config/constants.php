@@ -35,9 +35,4 @@ defined('TK_EXEC') or die('Restricted area.');
 define('TK_BACKEND', 'backend');
 define('TK_FRONTEND', 'frontend');
 
-define('TK_INFO', -10);
-define('TK_ERROR', -20);
-define('TK_NOTICE', -30);
-define('TK_WARNING', -40);
-
 /* End of file */

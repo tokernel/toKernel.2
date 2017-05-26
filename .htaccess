@@ -34,33 +34,26 @@ Options +FollowSymLinks
 # Notice: mod_rewrite module should be installed.
 RewriteEngine On
 
-# Disable directories browsing, that don't have an index file. 
-#Options -Indexes
-
 # @todo Check, if possible to remove this rule!
 # There are possible options to configure the 'RewriteBase'.
 #
-# Option 1. There is a domain name for your website and the website 
-#           is placed in 'www' directory (documentroot).
+# Option 1. Web project located in document root.
 #
 #           RewriteBase /
 #
-# Option 2. There is a domain name for your website and the website 
-#           is placed in subdirectory called "mysite"
+# Option 2. Web project located in document root's sub-directory
 #
 #           RewriteBase /mysite/
 #
-# Option 3. There is no domain name for your website and the website 
-#           is placed in 'www' directory (documentroot).
+# Option 3. Web project located in your home directory document root.
+#           Assume, by default the your document root located as /home/{your_username}/public_html
 #
 #           RewriteBase /~your_username/
 #
-# Option 4. There is no domain name for your website and the website 
-#           is placed in subdirectory called "mysite"
+# Option 4. Web project located in sub-directpry inside your home directory document root.
 #
 #           RewriteBase /~your_username/mysite/
 #
-# configured with option 2
 RewriteBase /
 
 # Rewrite conditions configuration
@@ -75,7 +68,7 @@ RewriteRule ^(.*)$ index.php?params=$1 [QSA,L]
 </FilesMatch>
 
 # Disallow access to framework/application misc files.
-<FilesMatch "\.(cache|ini|log|lg)$">
+<FilesMatch "\.(cache|ini|log|lg|sql)$">
 	Order Allow,Deny
    	Deny from all
 </FilesMatch>

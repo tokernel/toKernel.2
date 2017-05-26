@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.2.1
+ * @version    1.2.2
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -53,6 +53,14 @@ class session_lib {
 	protected $lib;
 	
 	/**
+	 * Request object
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $request;
+	
+	/**
 	 * Main Application object for
 	 * accessing app functions from this class
 	 *
@@ -73,12 +81,12 @@ class session_lib {
 	 * Class constructor
 	 *
 	 * @access public
-	 * @return void
 	 */
 	public function __construct() {
 		
 		$this->app = app::instance();
 		$this->lib = lib::instance();
+		$this->request = request::instance();
 		
 		/* Set session save path if defined */
 		$save_path = $this->app->config('session_save_path', 'SESSION');
@@ -109,7 +117,7 @@ class session_lib {
 		}
 		
 		/* Check if same browser accessed */
-		$user_agent = sha1($this->lib->filter->server('HTTP_USER_AGENT') . '_ERF%$DF34T6');
+		$user_agent = sha1($this->request->server('HTTP_USER_AGENT') . '_ERF%$DF34T6');
 		
 		if(isset($_SESSION[$this->sp . '_HTTP_USER_AGENT']) and $_SESSION[$this->sp . '_HTTP_USER_AGENT'] != md5($user_agent)) {
 			exit();

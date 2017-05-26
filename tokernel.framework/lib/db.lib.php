@@ -55,7 +55,7 @@ class db_lib {
 	 * @var string
 	 * @access protected
 	 */
-	protected $conn_ini_file = TK_DB_CONFIG_INI;
+	protected $conn_ini_file = 'databases.ini';
 	
 	/**
 	 * Class constructor

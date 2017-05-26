@@ -72,7 +72,7 @@ class email_lib {
 		}
 
 		// Set Configuration file path.
-		$conf_ini_file_path = TK_APP_PATH . 'config' . TK_DS . TK_EMAIL_CONFIG_INI;
+		$conf_ini_file_path = TK_APP_PATH . 'config' . TK_DS . 'email.ini';
 
 		// Load configuration object
 		$config_ini_obj = $this->lib->ini->instance($conf_ini_file_path, $config_section_name, false);

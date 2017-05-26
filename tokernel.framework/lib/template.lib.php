@@ -58,6 +58,14 @@ class template_lib {
 	protected $app;
 	
 	/**
+	 * Request object
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $request;
+	
+	/**
 	 * Addons object instance to access addons
 	 *
 	 * @var object
@@ -98,8 +106,9 @@ class template_lib {
 		
 		$this->lib = lib::instance();
 		$this->app = app::instance();
+		$this->request = request::instance();
 		$this->addons = addons::instance();
-				
+		
 	} // end of func __construct
 	
 	/**
@@ -107,7 +116,7 @@ class template_lib {
 	 *
 	 * @access protected
 	 * @return void
-	 * @since 3.0.0
+	 * @since  3.0.0
 	 */
 	protected function __clone() {
 		$this->buffer = '';
@@ -307,7 +316,8 @@ class template_lib {
 		} else {
 			
 			if(is_null($mode)) {
-				$mode = $this->app->get_mode();
+				// @todo rebuild this.
+				$mode = 'frontend';
 			}
 			
 			$templates_dir .= $mode . TK_DS;
@@ -376,9 +386,9 @@ class template_lib {
 					if($tmp_addon_data_arr['id_addon'] == '__THIS__') {
 						
 						tk_e::log_debug('Appending (main) addon result of __THIS__ ' .
-							$this->lib->url->addon() . '->' .
-							$this->lib->url->action(). '('.implode(', ',
-								$this->lib->url->params()).') ' .
+							$this->request->addon() . '->' .
+							$this->request->action(). '('.implode(', ',
+								$this->request->url_params()).') ' .
 							$tmp_addon_data_arr['action'] . '.',
 							get_class($this) . '->' . __FUNCTION__ . ' - ' . $this->template_name);
 						

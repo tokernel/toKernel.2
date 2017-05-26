@@ -83,15 +83,6 @@ defined('TK_EXEC') or die('Restricted area.');
 class form_validation_lib {
 
     /**
-     * Library object for working with
-     * libraries in this class
-     *
-     * @var object
-     * @access protected
-     */
-    protected $lib;
-
-    /**
      * Main Application object for
      * accessing app functions from this class
      *
@@ -99,7 +90,24 @@ class form_validation_lib {
      * @access protected
      */
     protected $app;
-
+	
+	/**
+	 * Library object for working with
+	 * libraries in this class
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $lib;
+	
+	/**
+	 * Request object
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $request;
+	
     /**
      * Rules array
      *
@@ -120,8 +128,8 @@ class form_validation_lib {
      * Custom messages for rules
      *
      * @access protected
-     * @var array
-     * @since 2.0.0
+     * @var    array
+     * @since  2.0.0
      */
     protected $rule_custom_messages = array();
 	
@@ -129,8 +137,8 @@ class form_validation_lib {
 	 * Data to validate
 	 *
 	 * @access protected
-	 * @var array
-	 * @since Version 2.0.0
+	 * @var    array
+	 * @since  Version 2.0.0
 	 */
 	protected $validation_data;
 	
@@ -151,6 +159,7 @@ class form_validation_lib {
     public function __construct() {
         $this->app = app::instance();
         $this->lib = lib::instance();
+        $this->request = request::instance();
     } // end func __construct
 
     /**
@@ -182,10 +191,10 @@ class form_validation_lib {
      * Return a new clean instance of this object
      *
      * @access public
-     * @param mixed array | NULL $rules
-     * @param mixed array | NULL $custom_messages
+     * @param  mixed array | NULL $rules
+     * @param  mixed array | NULL $custom_messages
      * @return object
-     * @since 2.0.0
+     * @since  2.0.0
      */
     public function instance($rules = null, $custom_messages = null) {
 	        	
@@ -237,22 +246,12 @@ class form_validation_lib {
      */
     public function run($validation_data = 'POST') {
 	
-	    // Notice: This can be a name of Request (POST | PUT | DELETE) or an assoc array.
-    	switch($validation_data) {
-		    case 'POST':
-		    case 'PUT':
-		    case 'DELETE':
-			    $this->validation_data = $validation_data;
-			    break;
-		    default:
-		    	if(is_array($validation_data)) {
-				    $this->validation_data = $validation_data;
-			    } else {
-				    trigger_error('Unacceptable validation data type.', E_USER_WARNING);
-				    return false;
-			    }
+	    if(is_array($validation_data)) {
+		    $this->validation_data = $validation_data;
+	    } else {
+		    $this->validation_data = $this->request->method();
 	    }
-	            
+	    	            
         foreach($this->rules as $element => $rules) {
 			
         	$value = $this->get_value($element);
@@ -667,12 +666,12 @@ class form_validation_lib {
 	 * Validate element with multiple values and set message
 	 *
      * @access protected
-     * @param string $element
-     * @param mixed $value
-     * @param string $rule
-     * @param mixed $rule_values
+     * @param  string $element
+     * @param  mixed $value
+     * @param  string $rule
+     * @param  mixed $rule_values
      * @return boolean
-     * @since 2.0.0
+     * @since  2.0.0
 	 */
 	protected function validate_multiple_rule($element, $value, $rule, $rule_values) {
 	
@@ -776,30 +775,22 @@ class form_validation_lib {
 	 * - DELETE
 	 *
 	 * @access protected
-	 * @param string $item
+	 * @param  string $item
 	 * @return mixed
-	 * @since Version 2.0.0
+	 * @since  Version 2.0.0
 	 */
 	protected function get_value($item) {
 		
-		switch($this->validation_data) {
-			case 'POST':
-				$value = $this->lib->filter->post($item);
-				break;
-			case 'PUT':
-				$value = $this->lib->filter->put($item);
-				break;
-			case 'DELETE':
-				$value = $this->lib->filter->delete($item);
-				break;
-			default:
-				if(isset($this->validation_data[$item])) {
-					$value = $this->validation_data[$item];
-				} else {
-					$value = false;
-				}
+		$value = false;
+		
+		if(is_array($this->validation_data)) {
+			if (isset($this->validation_data[$item])) {
+				$value = $this->validation_data[$item];
+			}
+		} elseif($this->request->method() === $this->validation_data) {
+			$value = $this->request->input($item);
 		}
-				
+		
 		return $value;
 		
 	} // End func get_value

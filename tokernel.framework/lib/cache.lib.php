@@ -55,7 +55,7 @@ class cache_lib {
 	 * @var string
 	 * @access protected
 	 */
-	protected $cache_ini_file = TK_CACHING_CONFIG_INI;
+	protected $cache_ini_file = 'caching.ini';
 
 	/**
 	 * Class constructor
@@ -84,7 +84,7 @@ class cache_lib {
 		}
 
 		// Set Configuration file path.
-		$conf_ini_file_path = TK_APP_PATH . 'config' . TK_DS . TK_CACHING_CONFIG_INI;
+		$conf_ini_file_path = TK_APP_PATH . 'config' . TK_DS . $this->cache_ini_file;
 
 		// Load configuration object
 		$config_ini_obj = $this->lib->ini->instance($conf_ini_file_path, $config_section_name, false);

@@ -55,7 +55,7 @@ class file_transfer_lib {
 	 * @var string
 	 * @access protected
 	 */
-	protected $conn_ini_file = TK_FILE_TRANSFER_INI;
+	protected $conn_ini_file = 'file_transfer.ini';
 	
 	/**
 	 * Class constructor

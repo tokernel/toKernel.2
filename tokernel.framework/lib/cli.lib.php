@@ -215,7 +215,7 @@ class cli_lib {
 			
 			$this->output_usage("Invalid Command line arguments!");
 			
-			exit(TK_NO_ARGS);
+			exit(1);
 		}
 		
 		/* Show usage on screen and exit, if called help action. */
@@ -230,7 +230,7 @@ class cli_lib {
 		tk_e::log_debug('Parsing arguments', __CLASS__.'->'.__FUNCTION__);
 		
 		/* Check, if routing exists for first argument */
-		$args = routing::parse($args);
+		$args = routing::parse_path($args);
 		
 		// Set addon from Arguments
 		$this->addon = $this->clean_arg($args[0]);
@@ -246,7 +246,7 @@ class cli_lib {
 		} else {
 			
 			$this->output_usage('Action is empty.');
-			exit(TK_NO_ARGS);
+			exit(1);
 		}
 		
 		/* Set params if not empty */

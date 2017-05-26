@@ -65,7 +65,25 @@ abstract class addon {
      * @access protected
      */
     protected $addons;
-
+	
+	/**
+	 * Request class library
+	 *
+	 * @var object
+	 * @access protected
+	 * @since Version 6.0.0
+	 */
+	protected $request;
+	
+	/**
+	 * Response class library
+	 *
+	 * @var object
+	 * @access protected
+	 * @since Version 6.0.0
+	 */
+	protected $response;
+	
     /**
      * Addon id
      *
@@ -142,6 +160,8 @@ abstract class addon {
 	    $this->app = app::instance();
 	    $this->lib = lib::instance();
         $this->addons = addons::instance();
+	    $this->request = request::instance();
+	    $this->response = response::instance();
 	    
         /* Define id_addon */
         $id_addon = get_class($this);
@@ -157,14 +177,9 @@ abstract class addon {
 	       Log file extension defined in application configuration file */
 	    $log_ext = $this->app->config('log_file_extension', 'ERROR_HANDLING');
 	    $this->log = $this->lib->log->instance('addon_' . $id_addon . '.' . $log_ext);
-	    
-	    /* Define language prefix */
-	    if(TK_RUN_MODE == 'cli') {
-		    self::$language_prefix = $this->lib->cli->language_prefix();
-	    } else {
-		    self::$language_prefix = $this->lib->url->language_prefix();
-	    }
-	    
+	
+	    self::$language_prefix = $this->request->language_prefix();
+	    	    
         /* Load language object */
 	    $this->language = $this->lib->language->instance(TK_APP_PATH . 'addons' . TK_DS . $id_addon . TK_DS . 'languages' . TK_DS . self::$language_prefix . '.ini');
         
@@ -603,7 +618,7 @@ abstract class addon {
      * @since 5.0.0
      */
     public function url() {
-        return $this->lib->url->base_url() . '/' . TK_APP_DIR . '/addons/' . $this->id . '/';
+        return $this->request->base_url() . '/' . TK_APP_DIR . '/addons/' . $this->id . '/';
     }
 
     /**
@@ -616,41 +631,6 @@ abstract class addon {
      */
     public function path() {
         return TK_ROOT_PATH . TK_APP_DIR . TK_DS . 'addons' . TK_DS . $this->id . TK_DS;
-    }
-
-    /**
-     * Return true if addon called from backend url or
-     * backend_dir is empty (not set) in configuration.
-     * Else, return false.
-     *
-     * @access public
-     * @return bool
-     * @since 2.2.0
-     */
-    public function is_backend() {
-        if($this->app->config('backend_dir', 'HTTP') != $this->lib->url->backend_dir()) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Return true if addon's action called from backend url
-     * or backend_dir is empty (not set) in configuration.
-     * Else, redirect to error_404
-     *
-     * @access public
-     * @return bool
-     * @since 2.2.0
-     */
-    public function check_backend() {
-	    
-    	if(!$this->is_backend()) {
-		    $this->app->error_404('This action of addon `'.get_class($this).'` allowed to access only from backend!');
-	    }
-
-        return true;
     }
 
     /**

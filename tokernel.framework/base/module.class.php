@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    3.1.1
+ * @version    4.0.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  *
@@ -76,7 +76,25 @@ class module {
      * @access protected
      */
     protected $addons;
-
+	
+	/**
+	 * Request class library
+	 *
+	 * @var object
+	 * @access protected
+	 * @since Version 4.0.0
+	 */
+	protected $request;
+	
+	/**
+	 * Response class library
+	 *
+	 * @var object
+	 * @access protected
+	 * @since Version 4.0.0
+	 */
+	protected $response;
+	
     /**
      * This module id
      *
@@ -162,6 +180,8 @@ class module {
         $this->lib = lib::instance();
         $this->app = app::instance();
         $this->addons = addons::instance();
+	    $this->request = request::instance();
+	    $this->response = response::instance();
 	    
         // Define Parent object
 	    $this->parent = $params['~parent'];
@@ -338,26 +358,6 @@ class module {
 		return false;
 		
 	} // End func view_exists
-
-    /**
-     * Return true if addon called from backend url or
-     * backend_dir is empty (not set) in configuration.
-     * Else, redirect to error_404
-     *
-     * @access public
-     * @return bool
-     * @since 2.3.0
-     */
-    public function check_backend() {
-
-        if($this->app->config('backend_dir', 'HTTP') != $this->lib->url->backend_dir()) {
-            $this->app->error_404('Cannot call method of class `' . get_class($this) . '` by this url.');
-            return false;
-        }
-
-        return true;
-
-    } // End func check_backend
 
     /**
      * Return addon configuration values

@@ -80,7 +80,6 @@ class addons {
 	 *
 	 * @final
 	 * @access private
-	 * @return void
 	 */
 	final private function __construct() {
 		

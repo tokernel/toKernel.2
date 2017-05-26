@@ -30,7 +30,7 @@
  */ 
 
 /**
- * This file will be included in application's index.php
+ * This file included only in application/index.php
  * Example: require('path/to/framework/dir/tokernel.inc.php');
  *
  * Restrict direct access to this file.
@@ -43,11 +43,11 @@ if(basename($_SERVER['PHP_SELF']) == basename(__FILE__)) {
 define('TK_START_RUN', round(microtime(true), 3));
 
 /*
- * In many files may exists this line to restrict direct access.
- * 
+ * To restrict direct access to files excepts index.php, we have to define constant for future check.
+ *
  * defined('TK_EXEC') or die('Restricted area.');
  * 
- * This definition allows to run below included files.
+ * This defined constant allows to run files included bellow.
  */
 define('TK_EXEC', true);
 
@@ -60,11 +60,13 @@ define('TK_EXEC', true);
  * /var/lib/tokernel.framework/
  * /home/{your_username}/tokernel.framework/
  * /home/{your_username}/public_html/tokernel.framework/
+ * /usr/local/lib/my-web-framework-core (as you can see, the framework directory name has been renamed).
  */
 define('TK_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 
 /*
- * toKernel directory name
+ * toKernel framework directory name
+ * by default: tokernel.framework
  */
 define('TK_DIR', basename(dirname(__FILE__)));
 
@@ -84,9 +86,6 @@ if(!empty($argc) and php_sapi_name() == 'cli') {
 	/* Define Framework's run mode */
 	define('TK_RUN_MODE', TK_CLI_MODE);
     
-	/* Define error exit code */
-	define('TK_NO_ARGS', 10);
-	
 	/*
 	 * Execute forever for CLI.
 	 * 
@@ -117,7 +116,6 @@ if(!empty($argc) and php_sapi_name() == 'cli') {
 	if(extension_loaded('zlib') and isset($_SERVER['HTTP_ACCEPT_ENCODING'])) {
 		if(strpos($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') !== false) {
 		   	ob_start("ob_gzhandler");
-		   	//ob_start(); // @todo figure out this.
 		   	define('TK_GZIP_OUTPUT', true);
 		}
 	}
@@ -129,66 +127,46 @@ if(!empty($argc) and php_sapi_name() == 'cli') {
 	
 } 
 
-/* 
- * Define default timezone before application initialization
- */
+/* Define default timezone before application initialization. */
 ini_set('date.timezone', 'America/Los_Angeles');
 
-/*
- * Detect PHP version and exit application if not compatible.
- * Note: Constant PHP_VERSION_REQUIRED defined in config/constants.php
- */
+/* Check Required PHP Version to run Framework. */
 if(version_compare(PHP_VERSION, TK_PHP_VERSION_REQUIRED, '<')) {
 	die(TK_NL. 'toKernel - Universal PHP Framework v' . TK_VERSION . '.' . 
 		TK_NL . 'PHP Version ' . PHP_VERSION . ' is not compatible. ' . 
 		TK_NL . ' Version ' . TK_PHP_VERSION_REQUIRED . ' or newer Required.');
 }
 
-/* 
- * Directory path for application instance
- * 
- * For example: /var/www/html/application/
- *
- * TK_APP_DIR is the directory name defined in main index.php
- * For example: application
- * TK_APP_PATH is the full path of application directory.
- * For example: /var/www/html/{your_application}/
- * 
- */
+/* Define Application instance path. */
 if(TK_APP_DIR != '') {
+	// case 1. /{web_directory}/application/
 	define('TK_APP_PATH', TK_ROOT_PATH . TK_APP_DIR . TK_DS);
 } else {
+	// case 2. /{web_directory}/
 	define('TK_APP_PATH', TK_ROOT_PATH);
 }
 
 /* Include application constants file */
-require(TK_APP_PATH . 'config' . TK_DS . 'constants.php');
+require_once(TK_APP_PATH . 'config' . TK_DS . 'constants.php');
 		
-/* Load main library class from Framework's kernel. */
-require_once(TK_PATH . 'kernel' . TK_DS . 'lib.class.php');
+/* Load main library loader class from Framework's kernel. */
+require_once(TK_PATH . 'kernel' . TK_DS . 'loaders' . TK_DS . 'lib.class.php');
 $lib = lib::instance();
 
 // Include routing library
-require_once(TK_PATH . 'kernel'. TK_DS . 'routing.class.php');
+require_once(TK_PATH . 'kernel' . TK_DS . 'routing' . TK_DS . 'routing.core.class.php');
+require_once(TK_PATH . 'kernel'. TK_DS . 'routing' .TK_DS. 'routing.'.TK_RUN_MODE.'.class.php');
 
-/* Load Addons instance class file Framework's kernel. */
-require_once(TK_PATH . 'kernel' . TK_DS . 'addons.class.php');
+/* Include Addons loader library. */
+require_once(TK_PATH . 'kernel' . TK_DS . 'loaders' . TK_DS . 'addons.class.php');
 
-/* Include parent error handler class. */
-require(TK_PATH . 'kernel'.TK_DS.'e.core.class.php');
+/* Include base error/exception handler class. */
+require_once(TK_PATH . 'kernel' . TK_DS . 'e-handlers' . TK_DS . 'e.core.class.php');
 
-/* 
- * Include extended error handler class depending 
- * on application run mode (CLI or HTTP)
- */
-require(TK_PATH . 'kernel'.TK_DS.'e.'.TK_RUN_MODE.'.class.php');
+/* Include extended error handler class depending on application run mode (CLI | HTTP) */
+require_once(TK_PATH . 'kernel' . TK_DS . 'e-handlers' . TK_DS . 'e.' . TK_RUN_MODE.'.class.php');
 
-/* 
- * Set error and exception handlers.
- * 
- * Error options are defined in tk_e class by default.
- * They will be reconfigured on application instance loading.
- */
+/* Set error and exception handlers. */
 set_exception_handler(array('tk_e', 'exception'));
 set_error_handler(array('tk_e', 'exception_error_handler'));
 
@@ -204,13 +182,17 @@ register_shutdown_function(array('tk_e', 'shutdown'));
 ini_set('log_errors', 0);
 ini_set('display_errors', 1);
 
+/*
+ * Include Request and Response classes depends on application run mode.
+ */
+require_once(TK_PATH . 'kernel'.TK_DS.'request'.TK_DS.'request.'.TK_RUN_MODE.'.class.php');
+require_once(TK_PATH . 'kernel'.TK_DS.'response'.TK_DS.'response.'.TK_RUN_MODE.'.class.php');
+
 /* Load application configuration object */
-$config = $lib->ini->instance(TK_APP_PATH . 'config' . TK_DS .
-								TK_APP_INI, 'RUN_MODE');
+$config = $lib->ini->instance(TK_APP_PATH . 'config' . TK_DS . 'application.ini', 'RUN_MODE');
 
 if(!is_object($config)) {
-	trigger_error('Application configuration file is not ' . 
-					'readable or corrupted.', E_USER_ERROR);
+	trigger_error('Application configuration file is not readable or corrupted.', E_USER_ERROR);
 	exit(1);
 }
 
@@ -223,34 +205,23 @@ tk_e::log_debug('', ':==================== START ====================');
 tk_e::log_debug('Configured Error Exception/Handler mode', 'Loader');
 
 /* Include application core class. */
-require_once(TK_PATH . 'kernel' . TK_DS . 'app.core.class.php');
+require_once(TK_PATH . 'kernel' . TK_DS . 'app' . TK_DS . 'app.core.class.php');
 
-/* 
- * Include extended application class depending 
- * on application run mode (CLI or HTTP)
- */
-require_once(TK_PATH . 'kernel' . TK_DS . 'app.' . TK_RUN_MODE . '.class.php');
+/* Include extended application class depending on application run mode (CLI | HTTP) */
+require_once(TK_PATH . 'kernel' . TK_DS . 'app' . TK_DS . 'app.' . TK_RUN_MODE . '.class.php');
 
-/* Include parent addon class */
+/* Include base addon, module, model, view classes */
 require_once(TK_PATH . 'base' . TK_DS . 'addon.class.php');
-
-/* Include parent module class */
 require_once(TK_PATH . 'base' . TK_DS . 'module.class.php');
-
-/* Include parent model class */
 require_once(TK_PATH . 'base' . TK_DS . 'model.class.php');
-
-/* Include parent view class */
 require_once(TK_PATH . 'base' . TK_DS . 'view.class.php');
 
-/* Application base classes */
+tk_e::log_debug('Loading app base addon, module, model, view classes.', 'Loader');
 
-/* Include base module */
+/* Include application base addon, module, model, view classes */
 require_once(TK_APP_PATH . 'base' . TK_DS . 'base_module.class.php');
 
-/**
- * Include all Base files from application/base/*
- */
+/* Include all Base files from application/base/* */
 $app_base_files = $lib->file->ls(TK_APP_PATH . 'base', '-', false, 'php');
 
 if(!empty($app_base_files)) {
@@ -263,26 +234,19 @@ unset($app_base_files);
 
 tk_e::log_debug('Loading app instance', 'Loader');
 
-/* 
- * Create application instance
- */
+/* Create application instance. */
 $app = app::instance($argv);
 
-/*
- * Include hooks
- */
-require_once(TK_PATH . 'kernel' . TK_DS . 'hooks_base.class.php');
+/* Include hooks */
+require_once(TK_PATH . 'base' . TK_DS . 'hooks_base.class.php');
 require_once(TK_APP_PATH . 'hooks' . TK_DS . 'hooks.class.php');
 
-/* 
- * Run application.
- * NOTE: It is possible to call application run function at once in this loader.
- */
+/* Run application. */
 if(!$app->run()) { 
 	trigger_error('Run Application failed!', E_USER_ERROR);
 }
  
-/* Define end time/duration for debug information */ 
+/* Define end time/duration for debug information. */
 define('TK_END_RUN', round(microtime(true), 3));
 define('TK_RUN_DURATION', round((TK_END_RUN - TK_START_RUN), 3));
 

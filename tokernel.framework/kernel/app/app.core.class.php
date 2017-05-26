@@ -24,7 +24,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.1.2
+ * @version    1.2.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -64,6 +64,24 @@ abstract class app_core {
 	 * @access protected
 	 */
 	protected static $runned = false;
+	
+	/**
+	 * Request class library
+	 *
+	 * @var    object
+	 * @access protected
+	 * @since  Version 1.2.0
+	 */
+	protected $request;
+	
+	/**
+	 * Response class library
+	 *
+	 * @var    object
+	 * @access protected
+	 * @since  Version 1.2.0
+	 */
+	protected $response;
 	
 	/**
 	 * Library object for working with
@@ -124,12 +142,15 @@ abstract class app_core {
 		unset(self::$instance->config);
 		unset(self::$instance->log);
 		unset(self::$instance->language);
+		unset(self::$instance->request);
+		unset(self::$instance->response);
 	} // end func _destruct
 	
 	/**
 	 * Singleton function to return one instance of this class.
 	 *
 	 * @final
+	 * @throws Exception
 	 * @access public
 	 * @static
 	 * @param mixed $argv = NULL
@@ -154,17 +175,23 @@ abstract class app_core {
 		/* Load library object */
 		self::$instance->lib = lib::instance();
 		
+		/* Load request object */
+		self::$instance->request = request::instance();
+		
+		/* Load response object */
+		self::$instance->response = response::instance();
+		
 		/* Load addons object */
 		self::$instance->addons = addons::instance();
 		
 		/* Load configuration */
 		self::$instance->config = self::$instance->lib->ini->instance(
-			TK_APP_PATH . 'config' . TK_DS . TK_APP_INI);
+			TK_APP_PATH . 'config' . TK_DS . 'application.ini');
 		
 		tk_e::log_debug('Loaded "config" object', 'app::' . __FUNCTION__);
 		
 		if(!self::$instance->config) {
-			throw new tk_e('toKernel - Universal PHP Framework v' . TK_VERSION .
+			throw new Exception('toKernel - Universal PHP Framework v' . TK_VERSION .
 				'. Application configuration file is not readable.', E_USER_ERROR);
 		}
 		
@@ -189,31 +216,13 @@ abstract class app_core {
 				
 				tk_e::log_debug('HTTP mode not allowed', 'app::' . __FUNCTION__);
 				
-				throw new tk_e('toKernel - Universal PHP Framework v' . TK_VERSION . '. HTTP mode not allowed.', E_USER_ERROR);
+				throw new Exception('toKernel - Universal PHP Framework v' . TK_VERSION . '. HTTP mode not allowed.', E_USER_ERROR);
 				
 			}
 			
-			/* Clean globals and XSS by configuration */
-			if(self::$instance->config->item_get('auto_clean_globals', 'HTTP') == 1) {
-				
-				tk_e::log_debug('Cleaning $GLOBALS', 'app::' . __FUNCTION__);
-				
-				self::$instance->lib->filter->clean_globals(self::$instance->config->item_get('auto_clean_globals_xss', 'HTTP'));
-			}
-			
-			/* Clean url by configuration, before initialize */
-			if(self::$instance->config->item_get('auto_clean_url', 'HTTP') == 1) {
-				
-				tk_e::log_debug('Cleaning URL', 'app::' . __FUNCTION__);
-				
-				self::$instance->lib->filter->clean_url(self::$instance->config->item_get('http_get_var', 'HTTP'));
-			}
-			
-			/* Initialize (parse) url */
-			self::$instance->lib->url->init(self::$instance->config);
-			
-			$language_prefix = self::$instance->lib->url->language_prefix();
-			
+			/* Initialize Request */
+			self::$instance->request->init(self::$instance->config);
+						
 		} elseif(TK_RUN_MODE == 'cli') {
 			
 			tk_e::log_debug('Running in CLI mode', 'app::' . __FUNCTION__);
@@ -226,22 +235,16 @@ abstract class app_core {
 				throw new tk_e('toKernel - Universal PHP Framework v' . TK_VERSION
 					. '. CLI mode not allowed.', E_USER_ERROR);
 			}
-			
-			/* Clean command line arguments by configuration */
-			if(self::$instance->config->item_get('cli_auto_clean_args', 'CLI') == 1) {
-				
-				tk_e::log_debug('Cleaning command line arguments',
-					'app::' . __FUNCTION__);
-				
-				$argv = self::$instance->lib->filter->clean_data($argv);
-			}
-			
-			/* Initialize (parse) command line arguments */
-			self::$instance->lib->cli->init($argv, self::$instance->config);
-			
-			$language_prefix = self::$instance->lib->cli->language_prefix();
-			
+									
+			/* Initialize Request */
+			self::$instance->config->section_set(
+				'HTTP_INTERFACE',
+				self::$instance->request->init($argv, self::$instance->config)
+			);
+						
 		} // end run mode
+		
+		$language_prefix = self::$instance->request->language_prefix();
 		
 		if($language_prefix == '') {
 			tk_e::log_debug('Language prefix is invalid. Set to default "en"', 'app::' . __FUNCTION__);
@@ -387,9 +390,9 @@ abstract class app_core {
 	 * return timezone by section name is set.
 	 *
 	 * @access public
-	 * @param string $section
+	 * @param  string $section
 	 * @return array
-	 * @since 1.1.0
+	 * @since  1.1.0
 	 */
 	public function timezones($section = NULL) {
 		
@@ -427,5 +430,5 @@ abstract class app_core {
 		return $data_arr;
 		
 	} // end func timezones
-	
+		
 } /* End of class app_core */

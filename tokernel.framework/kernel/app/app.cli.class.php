@@ -61,8 +61,8 @@ class app extends app_core {
 		tk_e::log_debug('Start', 'app->'.__FUNCTION__);
 		
 		/* Set id_addon and action to call */
-		$id_addon = $this->lib->cli->addon();
-		$action = $this->lib->cli->action();
+		$id_addon = $this->request->addon();
+		$action = $this->request->action();
 		
 		/* Define hooks object */
 		$this->hooks = new hooks();
@@ -89,8 +89,8 @@ class app extends app_core {
 			tk_e::log('Addon `'.$id_addon.'` not exists!', E_USER_NOTICE,
 				__FILE__, __LINE__);
 			
-			$this->lib->cli->output_usage('Addon `'.$id_addon.'` not exists!');
-			exit(TK_NO_ARGS);
+			$this->response->output_usage('Addon `'.$id_addon.'` not exists!');
+			exit(1);
 		}
 		
 		/* Load object for requested addon */
@@ -102,8 +102,8 @@ class app extends app_core {
 			tk_e::log('Addon `'.$id_addon.'` exists but not an object!',
 				E_USER_ERROR, __FILE__, __LINE__);
 			
-			$this->lib->cli->output_usage('Addon `'.$id_addon.'` not exists!');
-			exit(TK_NO_ARGS);
+			$this->response->output_usage('Addon `'.$id_addon.'` not exists!');
+			exit(1);
 		}
 		
 		/* Check, is addon allowed under current run mode */
@@ -123,9 +123,8 @@ class app extends app_core {
 			tk_e::log("Action '" . $action."' of addon '" .
 				$id_addon."' not exists!", E_USER_NOTICE, __FILE__, __LINE__);
 			
-			$this->lib->cli->output_usage("Action '" . $action."' of addon '" .
-				$id_addon."' not exists!");
-			exit(TK_NO_ARGS);
+			$this->response->output_usage("Action '" . $action."' of addon '" . $id_addon . "' not exists!");
+			exit(1);
 		}
 		
 		tk_e::log_debug('Call addon\'s action - "' .
@@ -133,7 +132,7 @@ class app extends app_core {
 			'app->'.__FUNCTION__);
 		
 		/* Call requested action method of loaded addon */
-		$addon->$function_to_call($this->lib->cli->params());
+		$addon->$function_to_call($this->request->params());
 		// call_user_func_array(array($addon, $function_to_call), $this->params);
 		
 		unset($function_to_call);
@@ -191,16 +190,5 @@ class app extends app_core {
 		);
 		
 	} // end func allowed_languages
-	
-	/**
-	 * This method defined in app.http.class.php
-	 *
-	 * @access public
-	 * @param string $mode frontend | backend
-	 * @return void
-	 */
-	public function set_mode($mode) {
-		return;
-	} // end fnc set_mode
-	
+		
 } /* End of class app */

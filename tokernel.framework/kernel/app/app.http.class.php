@@ -25,7 +25,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.5.2
+ * @version    2.0.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
@@ -39,23 +39,7 @@ defined('TK_EXEC') or die('Restricted area.');
  * @author David A. <tokernel@gmail.com>
  */
 class app extends app_core {
-	
-	/**
-	 * Main output buffer content
-	 *
-	 * @access private
-	 * @staticvar string
-	 */
-	private static $output_buffer = '';
-	
-	/**
-	 * Headers to send
-	 *
-	 * @access private
-	 * @staticvar array
-	 */
-	private static $headers = array();
-	
+			
 	/**
 	 * Initialized Template file name of main
 	 * callable addon without '*.tpl.php' extension.
@@ -80,12 +64,12 @@ class app extends app_core {
 	 * @access private
 	 * @var bool
 	 */
-	private $cached_output = false;
+	private $is_output_content_cached = false;
 	
 	
 	/**
 	 * Global variables to use in templates and view files.
-	 * Example: {var.base_url} will converted to application base url.
+	 * Example: {var.base_url} will convert to application base url.
 	 *
 	 * @access private
 	 * @var array
@@ -101,31 +85,26 @@ class app extends app_core {
 	 *
 	 * @final
 	 * @access public
+	 * @throws ErrorException
 	 * @return bool
 	 */
 	final public function run() {
 		
 		/* Calling this function second time will trigger error. */
 		if(self::$runned) {
-			trigger_error('Application is already runned. '.__CLASS__.'::'. __FUNCTION__.'()', E_USER_ERROR);
+			throw new ErrorException('Application is already runned. '.__CLASS__.'::'. __FUNCTION__.'()');
 		}
-		
-		tk_e::log_debug('Start', 'app->'.__FUNCTION__);
-		
+				
 		/* Define hooks object */
 		$this->hooks = new hooks();
-		
-		tk_e::log_debug('Loaded "hooks" object', 'app->'.__FUNCTION__);
-		
+				
 		/* Call first hook before main addon call */
 		if($this->config->item_get('allow_hooks', 'APPLICATION') == 1) {
-			tk_e::log_debug('Running application hooks (before)', 'app->'.__FUNCTION__);
 			$this->hooks->before_run();
 		}
 		
 		/* Call second hook before main addon call */
 		if($this->config->item_get('allow_http_hooks', 'HTTP') == 1) {
-			tk_e::log_debug('Running HTTP hooks (before)', 'app->'.__FUNCTION__);
 			$this->hooks->http_before_run();
 		}
 		
@@ -141,10 +120,8 @@ class app extends app_core {
 		$cache = $this->lib->cache->instance();
 		$ce_ = $cache->config('cache_expiration');
 		
-		if(($ce_ > 0 or $ce_ == '-1') and $this->lib->filter->server('REQUEST_METHOD') == 'GET') {
-			
-			tk_e::log_debug('Trying to load content from cache', 'app->'.__FUNCTION__);
-			
+		if(($ce_ > 0 or $ce_ == '-1') and $this->request->method() == 'GET') {
+						
 			/*
 			 * Trying to get cached content.
 			 * Will return false if cache expired or not exists.
@@ -157,53 +134,41 @@ class app extends app_core {
 			 */
 			if($cached_content) {
 				
-				self::$output_buffer = '';
+				$this->response->set_content($cached_content);
 				
-				self::$output_buffer .= $cached_content;
-				
-				$this->cached_output = true;
+				$this->is_output_content_cached = true;
 				
 				unset($cached_content);
 				
 				/* Set application run status */
 				self::$runned = true;
-				
-				tk_e::log_debug('Output content from cache', 'app->'.__FUNCTION__);
-				
+								
 				/* Output Application buffer */
-				$this->output();
+				$this->response->output();
 				
 				/* Call Last hook after main addon call in HTTP mode */
 				if($this->config->item_get('allow_http_hooks', 'HTTP') == 1) {
-					tk_e::log_debug('Running HTTP hooks (after)', 'app->'.__FUNCTION__);
 					$this->hooks->http_after_run();
 				}
 				
 				/* Call Last hook after main addon call */
 				if($this->config->item_get('allow_hooks', 'APPLICATION') == 1) {
-					tk_e::log_debug('Running application hooks (after)',
-						'app->'.__FUNCTION__);
 					$this->hooks->after_run();
 				}
-				
-				tk_e::log_debug('End with cache content', 'app->'.__FUNCTION__);
-				
+								
 				return true;
 				
 			} // end if content
-			
-			tk_e::log_debug('Cache expired or not exists.',  'app->'.__FUNCTION__);
-			
+						
 		} // end checking cache_expiration
 		
 		/* Set id_addon for load */
-		$id_addon = $this->lib->url->addon();
+		$id_addon = $this->request->addon();
 		
 		/* Check, if the default callable addon not exists */
 		$addon_exists = $this->addons->exist($id_addon);
 		
 		if($addon_exists == false and $id_addon == $this->config->item_get('default_callable_addon', 'HTTP')) {
-			tk_e::log_debug('End. Default callable addon not exists.', 'app->'.__FUNCTION__);
 			tk_e::error(E_USER_ERROR, 'Default callable addon not exists.', __FILE__, __LINE__);
 		}
 		
@@ -234,21 +199,16 @@ class app extends app_core {
 		}
 		
 		/* Set action to call */
-		$action = $this->lib->url->action();
+		$action = $this->request->action();
 		
 		/* Check, if action with 'ax_' ajax prefix */
 		if($action != '' and substr($action, 0, 3) == 'ax_') {
-			
-			tk_e::log_debug('Error: Action "' . $action .
-				'" with "ax_" prefix not allowed!',
-				'app->'.__FUNCTION__);
-			
 			$this->error_404('Action "'.$action.'" with "ax_" prefix not allowed!');
 		}
 		
 		/* Define callable method of addon */
-		if($this->is_ajax_request() == true) {
-			$function_to_call = 'action_ax_'.$action;
+		if($this->request->is_ajax() == true) {
+			$function_to_call = 'action_ax_' . $action;
 		} else {
 			$function_to_call = 'action_'.$action;
 		}
@@ -261,11 +221,7 @@ class app extends app_core {
 				__FILE__, __LINE__);
 			
 		}
-		
-		tk_e::log_debug('Call addon\'s action - "' .
-			$addon->id() . "->" . $function_to_call . '"',
-			'app->'.__FUNCTION__);
-		
+				
 		/* Set application global variables to use in templates and view files */
 		$this->load_default_vars();
 		
@@ -273,15 +229,12 @@ class app extends app_core {
 		ob_start();
 		
 		//call_user_func_array(array($addon, $function_to_call), $this->params());
-		$addon->$function_to_call($this->lib->url->params());
+		$addon->$function_to_call($this->request->url_params());
 		
 		$addon_called_func_buffer = ob_get_contents();
 		ob_end_clean();
 		unset($function_to_call);
-		
-		// Define empty output buffer before parsing the template.
-		self::$output_buffer = '';
-		
+				
 		/*
 		 * Define default template name if not set {addon}.{action}
 		 */
@@ -296,101 +249,65 @@ class app extends app_core {
 			
 		}
 		
+		$content_to_output = '';
+		
 		/*
 		 * Now if template name defined, load template object instance
 		 */
 		if($this->template != '') {
-			
-			tk_e::log_debug('No Template file `'.$this->template.'` loaded ', 'app->'.__FUNCTION__);
-			
+						
 			$template_obj = $this->lib->template->instance($this->template, $this->template_vars);
-			self::$output_buffer .= $template_obj->run($addon_called_func_buffer);
-			
+			$content_to_output = $template_obj->run($addon_called_func_buffer);
+						
 		} else {
 			
-			tk_e::log_debug('No Template file defined', 'app->'.__FUNCTION__);
-			
-			self::$output_buffer = $addon_called_func_buffer;
+			$content_to_output = $addon_called_func_buffer;
 		}
+		
+		/* Call second hook before output buffer */
+		if($this->config->item_get('allow_http_hooks', 'HTTP') == 1) {
+			
+			// NOTICE: The hook 'http_before_output' is able to change the output buffer with your own risk.
+			// See: /application/hooks/hooks.class.php
+			$content_to_output = $this->hooks->http_before_output($content_to_output);
+		}
+		
+		$this->response->set_content($content_to_output);
 		
 		/*
 		 * Try to write content to cache.
 		 */
-		if(($ce_ > 0 or $ce_ == '-1') and $this->lib->filter->server('REQUEST_METHOD') == 'GET') {
-			
-			tk_e::log_debug('Trying to write content to chache.', 'app->'.__FUNCTION__);
-			
-			$to_cache_content = self::$output_buffer;
-			
-			$cache->write_content($this->lib->url->url(true, true, true), $to_cache_content, $ce_);
+		if(($ce_ > 0 or $ce_ == '-1') and $this->request->method() == 'GET') {
+									
+			$cache->write_content($this->lib->url->url(true, true, true), $content_to_output, $ce_);
 			
 		} // end checking cache_expiration
 		
 		/* Output Application buffer */
-		$this->output();
+		$this->response->output();
+		
+		/* Call hook after output buffer */
+		if($this->config->item_get('allow_http_hooks', 'HTTP') == 1) {
+			
+			$this->hooks->http_after_output($content_to_output);
+		}
 		
 		/* Call last hook after main addon call in HTTP mode */
 		if($this->config->item_get('allow_http_hooks', 'HTTP') == 1) {
-			tk_e::log_debug('Running HTTP hooks (after)', 'app->'.__FUNCTION__);
 			$this->hooks->http_after_run();
 		}
 		
 		/* Call last hook after main addon call */
 		if($this->config->item_get('allow_hooks', 'APPLICATION') == 1) {
-			tk_e::log_debug('Running application hooks (after)', 'app->'.__FUNCTION__);
 			$this->hooks->after_run();
 		}
 		
 		self::$runned = true;
-		
-		tk_e::log_debug('End', 'app->'.__FUNCTION__);
-		
+				
 		return true;
 		
 	} // end func run
-	
-	/**
-	 * Output application buffered content.
-	 *
-	 * @access protected
-	 * @return void
-	 */
-	protected function output() {
 		
-		/* Call second hook before output buffer */
-		if($this->config->item_get('allow_http_hooks', 'HTTP') == 1) {
-			tk_e::log_debug('Running hooks before output', 'app->'.__FUNCTION__);
-			
-			// NOTICE: The hook 'http_before_output' is able to change the output buffer with your own risk.
-			// See: /application/hooks/hooks.class.php
-			self::$output_buffer = $this->hooks->http_before_output(self::$output_buffer);
-		}
-		
-		/* Send headers */
-		foreach(self::$headers as $header) {
-			@header($header[0], $header[1]);
-		}
-		
-		/* Output buffer and clean */
-		echo self::$output_buffer;
-		
-		if(!TK_GZIP_OUTPUT) {
-			tk_e::log_debug('Output not compressed content', 'app->'.__FUNCTION__);
-		} else {
-			tk_e::log_debug('Output compressed content', 'app->'.__FUNCTION__);
-		}
-		
-		/* Call hook after output buffer */
-		if($this->config->item_get('allow_http_hooks', 'HTTP') == 1) {
-			tk_e::log_debug('Running hooks after output', 'app->'.__FUNCTION__);
-			$this->hooks->http_after_output(self::$output_buffer);
-		}
-		
-		self::$headers = array();
-		self::$output_buffer = '';
-		
-	} // end func output
-	
 	/**
 	 * Redirect
 	 *
@@ -444,19 +361,7 @@ class app extends app_core {
 	public function get_vars() {
 		return $this->variables;
 	} // End func set_var
-	
-	/**
-	 * Set header to output
-	 *
-	 * @access public
-	 * @param string $header
-	 * @param bool $replace
-	 * @return void
-	 */
-	public function set_header($header, $replace = true) {
-		self::$headers[] = array($header, $replace);
-	}
-	
+		
 	/**
 	 * Show error 404
 	 *
@@ -479,21 +384,23 @@ class app extends app_core {
 			$line = __LINE__;
 		}
 		
-		$remote_address = $this->lib->filter->server('REMOTE_ADDR');
+		$remote_address = $this->request->server('REMOTE_ADDR');
 		
 		if($this->config->item_get('log_errors_404', 'ERROR_HANDLING') == 1) {
 			$log_ext = $this->config->item_get('log_file_extension', 'ERROR_HANDLING');
 			$log_obj = $this->lib->log->instance('error_404.' . $log_ext);
-			$log_obj->write($message . '  CLIENT IP: ' .$remote_address . ' | URL: ' . $this->lib->url->query_string() . ' | FILE: ' . $file . ' | LINE: ' . $line);
+			$log_obj->write($message . '  CLIENT IP: ' .$remote_address . ' | URL: ' . $this->request->query_string() . ' | FILE: ' . $file . ' | LINE: ' . $line);
 		}
 		
-		if($this->is_ajax_request()) {
+		$this->response->set_status(404);
+		
+		if($this->request->is_ajax()) {
 			
-			tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->lib->url->query_string() . '"',	'app->'.__FUNCTION__);
+			tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->request->query_string() . '"',	'app->'.__FUNCTION__);
 			tk_e::log_debug('', ':============= END WITH ERROR 404 ==============');
 			
-			header('HTTP/1.1 404 Not Found');
-			echo $this->language('err_404_subject');
+			$this->response->set_content($this->language('err_404_subject'));
+			$this->response->output();
 			
 			exit();
 		}
@@ -510,29 +417,25 @@ class app extends app_core {
 		}
 		
 		$this->set_template('error_404', $this->variables);
-		$this->set_header('HTTP/1.1 404 Not Found', true);
-		
+						
 		/*
 		 * Load template object instance
 		 */
 		$template_obj = $this->lib->template->instance($this->template, $this->template_vars);
-		
-		self::$output_buffer = '';
-		
+				
 		if($template_obj) {
-			self::$output_buffer .= $template_obj->run();
+			$this->response->set_content($template_obj->run());
 		} else {
-			self::$output_buffer = $this->language('err_404_subject');
-			
+			$this->response->set_content($this->language('err_404_subject'));
 			tk_e::log_debug('Template file "'. $this->template . '" not detected',	'app->'.__FUNCTION__);
 		}
 		
 		/* Output Application buffer */
-		$this->output();
+		$this->response->output();
 		
 		self::$runned = true;
 		
-		tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->lib->url->query_string() . '"',	'app->'.__FUNCTION__);
+		tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->request->query_string() . '"',	'app->'.__FUNCTION__);
 		tk_e::log_debug('', ':============= END WITH ERROR 404 ==============');
 		
 		exit();
@@ -545,38 +448,10 @@ class app extends app_core {
 	 * @access public
 	 * @return bool
 	 */
-	public function cached_output() {
-		return $this->cached_output;
+	public function is_output_content_cached() {
+		return $this->is_output_content_cached;
 	}
-	
-	/**
-	 * Return request method
-	 *
-	 * @access public
-	 * @return bool
-	 */
-	public function request_method() {
-		
-		if(isset($_SERVER['REQUEST_METHOD'])) {
-			return $_SERVER['REQUEST_METHOD'];
-		}
-		
-		return false;
-		
-	} // end func request_method
-	
-	/**
-	 * Is Ajax request
-	 *
-	 * @access public
-	 * @return bool
-	 */
-	public function is_ajax_request() {
-		
-		return (isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-			$_SERVER['HTTP_X_REQUESTED_WITH']=="XMLHttpRequest");
-	}
-	
+			
 	/**
 	 * Return template of main addon.
 	 *
@@ -641,7 +516,7 @@ class app extends app_core {
 	 */
 	public function allowed_languages($lp = NULL) {
 		
-		$a_languages = $this->lib->url->allowed_languages();
+		$a_languages = $this->request->allowed_languages();
 		
 		$tk_lng_ref_file = TK_PATH . 'config' . TK_DS . 'languages.ini';
 		$app_lng_ref_file = TK_APP_PATH . 'config' . TK_DS . 'languages.ini';
@@ -683,7 +558,7 @@ class app extends app_core {
 			trigger_error('Application instance is empty ('.__CLASS__.')', E_USER_ERROR );
 		}
 		
-		if(!$this->lib->url->set_language_prefix($lp)) {
+		if(!$this->request->set_language_prefix($lp)) {
 			trigger_error('Trying to set not allowed language prefix `'.$lp.'`.', E_USER_ERROR );
 		}
 		
@@ -691,39 +566,19 @@ class app extends app_core {
 		self::$instance->language = self::$instance->lib->language->instance(TK_APP_PATH . 'languages'. TK_DS.$lp.'.ini');
 		
 	} // end func set_language
-	
-	/**
-	 * Set application mode frontend | backend
-	 *
-	 * @access public
-	 * @param string $mode frontend | backend
-	 * @return void
-	 */
-	public function set_mode($mode) {
-		$this->lib->url->set_mode($mode);
-	} // end fnc set_mode
-	
-	/**
-	 * Return application mode frontend | backend
-	 *
-	 * @access public
-	 * @return string
-	 */
-	public function get_mode() {
-		return $this->lib->url->mode();
-	}
-	
+			
 	/**
 	 * Return application theme name by run mode.
 	 *
 	 * @access public
 	 * @param mixed
 	 * @return string
+	 * @todo Re-build this method content
 	 */
 	public function theme_name($mode = NULL) {
 		
 		if(is_null($mode)) {
-			$mode = $this->get_mode();
+			$mode = 'some_interface';
 		}
 		
 		return $this->config->item_get($mode.'.theme', 'HTTP');
@@ -735,11 +590,12 @@ class app extends app_core {
 	 * @access public
 	 * @param mixed
 	 * @return string
+	 * @todo rebuild this
 	 */
 	public function theme_path($mode = NULL) {
 		
 		if(is_null($mode)) {
-			$mode = $this->get_mode();
+			$mode = 'some_interface';
 		}
 		
 		return TK_APP_PATH . 'themes' . TK_DS . $mode . TK_DS .
@@ -753,21 +609,22 @@ class app extends app_core {
 	 * @access public
 	 * @param mixed
 	 * @return string
+	 * @todo rebuild this
 	 */
 	public function theme_url($mode = NULL) {
 		
 		if(is_null($mode)) {
-			$mode = $this->get_mode();
+			$mode = 'some_interface';
 		}
 		
 		$url = '';
 		
 		if(TK_APP_DIR != '') {
-			$url = $this->lib->url->base_url() . '/' . TK_APP_DIR . '/themes/' .
+			$url = $this->request->base_url() . '/' . TK_APP_DIR . '/themes/' .
 				$mode . '/' .
 				$this->config->item_get($mode . '.theme', 'HTTP');
 		} else {
-			$url = $this->lib->url->base_url() . '/themes/' . $mode . '/' .
+			$url = $this->request->base_url() . '/themes/' . $mode . '/' .
 				$this->config->item_get($mode . '.theme', 'HTTP');
 		}
 		
@@ -786,9 +643,9 @@ class app extends app_core {
 		$url = '';
 		
 		if(TK_APP_DIR != '') {
-			$url = $this->lib->url->base_url() . '/' . TK_APP_DIR;
+			$url = $this->request->base_url() . '/' . TK_APP_DIR;
 		} else {
-			$url = $this->lib->url->base_url();
+			$url = $this->request->base_url();
 		}
 		
 		return $url;
@@ -802,7 +659,7 @@ class app extends app_core {
 	 * @return string
 	 */
 	public function tk_url() {
-		return $this->lib->url->base_url() . TK_DIR;
+		return $this->request->base_url() . TK_DIR;
 	} // end func custom_url
 	
 	/**
@@ -814,22 +671,29 @@ class app extends app_core {
 	protected function load_default_vars() {
 		
 		/* Set application global variables to use in templates and view files */
-		$this->variables['base_url'] = $this->lib->url->base_url();
-		$this->variables['base_url_lng'] = $this->lib->url->base_url() . '/' . $this->lib->url->language_prefix();
-		$this->variables['base_backend_url'] = $this->lib->url->base_url() . '/' . $this->config->item_get('backend_dir', 'HTTP');
-		$this->variables['base_backend_url_lng'] = $this->lib->url->base_url() . '/' . $this->config->item_get('backend_dir', 'HTTP') . '/' . $this->lib->url->language_prefix();
+		$this->variables['base_url'] = $this->request->base_url();
+		$this->variables['base_url_lng'] = $this->request->base_url() . '/' . $this->request->language_prefix();
+		// @todo predefine this 2 items
+		$this->variables['base_interface_url'] = $this->request->base_url() . '/' . $this->config->item_get('interface_dir', 'HTTP');
+		$this->variables['base_interface_url_lng'] = $this->request->base_url() . '/' . $this->config->item_get('interface_dir', 'HTTP') . '/' . $this->request->language_prefix();
 		$this->variables['app_url'] = $this->app_url();
 		$this->variables['theme_name'] = $this->theme_name();
 		$this->variables['theme_url'] = $this->theme_url();
 		$this->variables['theme_images_url'] = $this->theme_url() . '/images';
 		$this->variables['theme_js_url'] = $this->theme_url() . '/js';
 		$this->variables['theme_css_url'] = $this->theme_url() . '/css';
-		$this->variables['uploads_url'] = $this->lib->url->base_url() . '/uploads';
-		$this->variables['language_prefix'] = $this->lib->url->language_prefix();
+		$this->variables['uploads_url'] = $this->request->base_url() . '/uploads';
+		$this->variables['language_prefix'] = $this->request->language_prefix();
+		
+		/* @todo get date format from configuration */
 		$this->variables['date'] = date('d/m/Y');
 		$this->variables['day'] = date('d');
 		$this->variables['month'] = date('m');
 		$this->variables['year'] = date('Y');
+		
+		/* @todo also display full date/time */
+		
+		/* @todo also parse time, minute, second */
 		
 	} // End func load_default_vars
 	

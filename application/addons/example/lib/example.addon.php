@@ -162,7 +162,7 @@ class example_addon extends user_base_addon {
      * See: application/config/routes.ini
      */
     public function cli_colors() {
-        $this->lib->cli->output_colors();
+        $this->response->output_colors();
     }
 
     /**
@@ -230,7 +230,7 @@ class example_addon extends user_base_addon {
      * Examples of Templates and widgets usage
      * Actions bellow will demonstrate you the templates and widgets functionality in project.
      *
-     * Notice: Template files located in /application/templates/frontend/ directory
+     * Notice: Template files located in /application/templates/some_interface/ directory
      */
 
     /**
@@ -244,7 +244,7 @@ class example_addon extends user_base_addon {
         $this->app->set_template('example.my_template');
 
         // This output will display in template widget named "__THIS__".
-        // See: /application/templates/frontend/example.my_template.tpl.php
+        // See: /application/templates/some_interface/example.my_template.tpl.php
         echo 'This is the addon action output.';
     }
 
@@ -262,7 +262,7 @@ class example_addon extends user_base_addon {
         // addon.action name: example.by_default
 
         // This output will display in template widget named "__THIS__".
-        // See: /application/templates/frontend/example.template_by_default.tpl.php
+        // See: /application/templates/some_interface/example.template_by_default.tpl.php
         echo 'This is the addon action output.';
     }
 
@@ -277,7 +277,7 @@ class example_addon extends user_base_addon {
         $this->app->set_template('example.my_template_with_widgets');
 
         // This output will display in template widget named "__THIS__".
-        // See: /application/templates/frontend/example.my_template.tpl.php
+        // See: /application/templates/some_interface/example.my_template.tpl.php
         echo 'This is the addon action output.';
 
     }
@@ -300,7 +300,7 @@ class example_addon extends user_base_addon {
 		);
 		
 		// This output will display in template widget named "__THIS__".
-		// See: /application/templates/frontend/example.my_template_with_module_specific_widgets.tpl.php
+		// See: /application/templates/some_interface/example.my_template_with_module_specific_widgets.tpl.php
 		echo 'This is the addon action output.';
 		
 	}
@@ -309,7 +309,7 @@ class example_addon extends user_base_addon {
      * Widget without parameters.
      *
      * This widget method called from template file:
-     * /application/templates/frontend/example.my_template_with_widgets.tpl.php
+     * /application/templates/some_interface/example.my_template_with_widgets.tpl.php
      *
      * as:
      * <!-- widget addon="example" action="widget_without_params" -->
@@ -327,7 +327,7 @@ class example_addon extends user_base_addon {
      * Widget with parameters.
      *
      * This widget method called from template file:
-     * /application/templates/frontend/example.my_template_with_widgets.tpl.php
+     * /application/templates/some_interface/example.my_template_with_widgets.tpl.php
      *
      * as:
      * <!-- widget addon="example" action="widget_with_params" params="project=My Project|version=1.0.0 alpha" -->
@@ -543,7 +543,7 @@ class example_addon extends user_base_addon {
         $p1 = $this->lib->load('pagination', $params, true);
         // The last argument "true" assumes that the new instance of library will be returned.
 	    
-	    $offset = $this->lib->url->params(0);
+	    $offset = $this->request->url_params(0);
 	    	    
         $base_url = $this->lib->url->url('example', 'lib_usage', array(0 => '{var.offset}', 2 => 'some-other-arg'));
         echo $p1->run(155, 10, $offset, $base_url);
@@ -747,6 +747,66 @@ class example_addon extends user_base_addon {
 		$module = $this->load_module('form_validation_example');
 		$module->custom_data_validation();
 		
+	}
+	
+	// Testing Request / Response in CLI
+	public function cli_r() {
+		
+		$this->response->output_usage('Just testing! :)');
+		
+		$this->response->output(
+			$this->request->params(0),
+			'yellow',
+			'red'
+		);
+		
+		$this->response->output('A', 'white');
+		
+	}
+	
+	// Testing request and response
+	public function action_r() {
+		
+		$content = 'Hello World!';
+		
+		// Option 1. Just directly echo the content
+		$this->response->set_status(401);
+		//$this->response->set_headers('Content-Type: text/plain');
+		
+		foreach($GLOBALS as $key => $value) {
+			echo $key . "<br/>";
+		}
+		
+		echo $content;
+		
+		return true;
+				
+		// Option 2. Set response content
+		$this->response->set_status(401);
+		$this->response->set_headers('a', 'b');
+		$this->response->set_content($content);
+		
+		return true;
+				
+		///// Cases when json/API //////////
+		
+		// Case 1. Just directly echo json
+		$response_data = array(
+			'a' => 1,
+			'b' => 2
+		);
+		
+		$this->response->set_headers('Content-Type: Application/json');
+		echo json_encode($response_data);
+		
+		return true;
+		
+		// Case 2. Set response content
+		// Response will know to add json type to headers
+		$this->response->set_content($response_data);
+		
+		return true;
+				
 	}
 	
 } // end class

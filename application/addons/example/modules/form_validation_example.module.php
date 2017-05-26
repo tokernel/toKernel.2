@@ -21,7 +21,7 @@ class example_form_validation_example_module extends base_module {
 		
 		// Initializing the page template
 		// Template name: example.form_validation
-		// File: /application/templates/frontend/example.form_validation.tpl.php
+		// File: /application/templates/some_interface/example.form_validation.tpl.php
 		$this->app->set_template(
 			'example.form_validation',
 			array(
@@ -79,20 +79,17 @@ class example_form_validation_example_module extends base_module {
 		$fv_lib = $this->lib->form_validation->instance($validation_rules, $validation_messages);
 		
 		// Do validation if form submitted
-		if($this->app->request_method() == 'POST') {
+		if($this->request->method() == 'POST') {
 			// Now depends on the value of $result you can do your staff (for example, insert data into database).
 			// By Default, the validation process will work with POST request data.
 			$result = $fv_lib->run();
 		}
-		
-		// Get data filtered
-		$fl_lib = $this->lib->filter;
-		
+
 		// Load form view
 		// The second array argument if the values used in view file
 		// See file: /application/addons/example/modules/form_validation_example/views/form1.view.php
 		
-		$post_phone_numbers = $this->lib->filter->post('phone_number');
+		$post_phone_numbers = $this->request->input('phone_number');
 		for($i = 0; $i<=2; $i++) {
 			if(isset($post_phone_numbers[$i])) {
 				$phone_numbers[$i] = $post_phone_numbers[$i];
@@ -106,10 +103,10 @@ class example_form_validation_example_module extends base_module {
 			'form1',
 			array(
 				'messages' => $fv_lib->get_messages(),
-				'title' => $fl_lib->post('title'),
-				'name' => $fl_lib->post('name'),
-				'age' => $fl_lib->post('age'),
-				'email' => $fl_lib->post('email'),
+				'title' => $this->request->input('title'),
+				'name' => $this->request->input('name'),
+				'age' => $this->request->input('age'),
+				'email' => $this->request->input('email'),
 				'phone_number_1' =>$phone_numbers[0],
 				'phone_number_2' =>$phone_numbers[1],
 				'phone_number_3' =>$phone_numbers[2]
@@ -150,7 +147,7 @@ class example_form_validation_example_module extends base_module {
 		$fv_lib = $this->lib->form_validation->instance($validation_rules, $validation_messages);
 				
 		// Now if the PUT request submitted, let's do validation
-		if($this->app->request_method() == 'PUT') {
+		if($this->request->method() == 'PUT') {
 			
 			// We setting the PUT request data to run and validate instead of default POST.
 			$result = $fv_lib->run('PUT');
@@ -158,18 +155,18 @@ class example_form_validation_example_module extends base_module {
 			// This is just an example to output json encoded data.
 			// NOTICE! In production, you have to manage and organize the output data with correct headers.
 			if(!$result) {
-				http_response_code(400);
+				$this->response->set_status(400);
 				$data = array(
 					'error' => $fv_lib->get_messages()
 				);
 			} else {
 				$data = array(
 					'status' => 'OK',
-					'data_received' => $this->lib->filter->put()
+					'data_received' => $this->request->input()
 				);
 			}
 		} else {
-			http_response_code(405);
+			$this->response->set_status(405);
 			$data = array(
 				'error' => 'Method not allowed'
 			);

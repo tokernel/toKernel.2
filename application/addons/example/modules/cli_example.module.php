@@ -26,9 +26,9 @@ class example_cli_example_module extends module {
      */
     public function welcome() {
 
-        $this->lib->cli->out('Welcome! ' . TK_SHORT_NAME, 'green');
-        $this->lib->cli->out(TK_DESCRIPTION, 'green');
-        $this->lib->cli->out('Version ' . TK_VERSION, 'white');
+        $this->response->output('Welcome! ' . TK_SHORT_NAME, 'green');
+        $this->response->output(TK_DESCRIPTION, 'green');
+        $this->response->output('Version ' . TK_VERSION, 'white');
         
         return true;
     }
@@ -41,10 +41,10 @@ class example_cli_example_module extends module {
      */
     public function interactive() {
 
-        $this->lib->cli->out('Hi!', 'yellow');
-        $this->lib->cli->out('Enter your name: ', 'white');
-        $name = $this->lib->cli->in();
-        $this->lib->cli->out('Hello ' . $name, 'green');
+        $this->response->output('Hi!', 'yellow');
+        $this->response->output('Enter your name: ', 'white');
+        $name = $this->request->in();
+        $this->response->output('Hello ' . $name, 'green');
         
         return true;
     }
@@ -57,24 +57,24 @@ class example_cli_example_module extends module {
      */
     public function with_params() {
 
-        $this->lib->cli->out('Hello!', 'yellow');
-        $this->lib->cli->out('You were called this application with parameters listed bellow:', 'white');
+        $this->response->output('Hello!', 'yellow');
+        $this->response->output('You were called this application with parameters listed bellow:', 'white');
         
-        $params = $this->lib->cli->params();
+        $params = $this->request->params();
 
         if(empty($params)) {
-            $this->lib->cli->out('There are no params!', 'red');
+            $this->response->output('There are no params!', 'red');
             exit(1);
         }
 
         foreach($params as $item => $value) {
-            $this->lib->cli->out($item . ': ' . $value, 'light_cyan');
+            $this->response->output($item . ': ' . $value, 'light_cyan');
         }
 	    
         // Get Parameter from CLI
-        $name = $this->lib->cli->params(0);
+        $name = $this->request->params(0);
         
-        $this->lib->cli->out('And the first param is: ' . $name, 'green', 'white');
+        $this->response->output('And the first param is: ' . $name, 'green', 'white');
         
         return true;
     }
@@ -85,8 +85,8 @@ class example_cli_example_module extends module {
 	 * Run {path_to_root_of_your_project}/index.php example with_params toKernel framework@tokernel.com
 	 */
 	public function output_params() {
-		$this->lib->cli->out('Hello!', 'yellow');
-		$this->lib->cli->out('Parameters defined in constructor', 'white');
+		$this->response->output('Hello!', 'yellow');
+		$this->response->output('Parameters defined in constructor', 'white');
 		print_r($this->params);
 	}
 }

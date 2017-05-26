@@ -23,25 +23,21 @@
 # @author     toKernel development team <framework@tokernel.com>
 # @copyright  Copyright (c) 2017 toKernel
 # @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
-# @version    1.0.2
+# @version    1.0.3
 # @link       http://www.tokernel.com
 # @since      File available since Release 1.0.0
-#
-# Please read this note before using this file.
-#
-# It is possible to get an error at runtime, if the line - 
-# 'Options +FollowSymLinks' uncommented. Comment the line listed below if 
-# the error occured. Reason - is the some server mod_rewrite configuration.
 
-# Comment this line if an error occurred. Read the note above.
+# Comment this line if an error occurred.
 Options +FollowSymLinks
 
-# mod_rewrite in use
+# Set RewriteEngine on
+# Notice: mod_rewrite module should be installed.
 RewriteEngine On
 
 # Disable directories browsing, that don't have an index file. 
 #Options -Indexes
 
+# @todo Check, if possible to remove this rule!
 # There are possible options to configure the 'RewriteBase'.
 #
 # Option 1. There is a domain name for your website and the website 

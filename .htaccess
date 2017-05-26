@@ -70,7 +70,7 @@ RewriteBase /
 # Rewrite conditions configuration
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php?tokernel2_params=$1 [QSA,L]
+RewriteRule ^(.*)$ index.php?params=$1 [QSA,L]
 
 # Disallow direct access to framework/application core php files.
 <FilesMatch "\.(class|lib|hook|tpl|addon|module|model|view).php$">

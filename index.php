@@ -1,7 +1,7 @@
 <?php
 /**
  * toKernel - Universal PHP Framework.
- * Main index.php file for application.
+ * Main index.php file of application.
  * 
  * This file is part of toKernel.
  *
@@ -30,17 +30,16 @@
  */
 
 /**
- * Define application path.
+ * Define project root path.
  */
 define('TK_ROOT_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 
 /*
- * Define application directory name (without directory separator), 
- * where customizable components are placed. 
+ * Define application directory name (without directory separator).
  */
 define('TK_APP_DIR', 'application');
 
-/* Change current directory path to current */
+/* Change current directory path. */
 chdir(TK_ROOT_PATH);
 
 /* Include framework loader */

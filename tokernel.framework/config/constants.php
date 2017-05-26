@@ -32,7 +32,7 @@
 /* Restrict direct access to this file */
 defined('TK_EXEC') or die('Restricted area.');
 
-/* Required PHP Version for toKernel */
+/* Required PHP Version for toKernel framework functionality */
 define('TK_PHP_VERSION_REQUIRED', '5.6');
 
 /* Project short name */
@@ -50,26 +50,5 @@ define('TK_DS', DIRECTORY_SEPARATOR);
 /* Define run mode constants */
 define('TK_CLI_MODE', 'cli');
 define('TK_HTTP_MODE', 'http');
-
-/* Application main configuration file */
-define('TK_APP_INI', 'application.ini');
-
-/* Name of Application HTTP and CLI mode routing */
-define('TK_ROUTES_INI', 'routes.ini');
-
-/* Name of Databases configuration file */
-define('TK_DB_CONFIG_INI', 'databases.ini');
-
-/* Name of Email sending configuration file */
-define('TK_EMAIL_CONFIG_INI', 'email.ini');
-
-/* Name of Caching configuration file */
-define('TK_CACHING_CONFIG_INI', 'caching.ini');
-
-/* Name of File transfer configuration file */
-define('TK_FILE_TRANSFER_INI', 'file_transfer.ini');
-
-/* Name of HTTP status codes reference file */
-define('TK_HTTP_STATUS_CODES_INI', 'status_codes.ini');
 
 /* End of file */

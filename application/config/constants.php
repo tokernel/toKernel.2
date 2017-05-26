@@ -24,15 +24,12 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.0.0
+ * @version    1.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.0
  */
 
 /* Restrict direct access to this file */
 defined('TK_EXEC') or die('Restricted area.');
-
-define('TK_BACKEND', 'backend');
-define('TK_FRONTEND', 'frontend');
 
 /* End of file */

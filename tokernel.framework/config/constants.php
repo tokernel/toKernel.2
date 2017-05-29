@@ -48,7 +48,7 @@ define('TK_VERSION', '2.3.0');
 define('TK_DS', DIRECTORY_SEPARATOR);
 
 /* Define run mode constants */
-define('TK_CLI_MODE', 'cli');
 define('TK_HTTP_MODE', 'http');
+define('TK_CLI_MODE', 'cli');
 
 /* End of file */

@@ -43,10 +43,17 @@ class routing extends routing_core {
 		
 		$config = lib::instance()->ini->instance(TK_APP_PATH . 'config' . TK_DS . 'http_interfaces.ini');
 		
+		// Data to return
+		$result = array(
+			'interface' => null,
+			'request' => array(
+				'interface_name' => 'tokernel_default'
+			)
+		);
+		
 		// Initialize default interface.
 		$interface = $config->section_get('tokernel_default');
-		$interface['interface_name'] = 'tokernel_default';
-		
+				
 		foreach($config->sections() as $interface_name) {
 			
 			// Skip default interface
@@ -63,7 +70,7 @@ class routing extends routing_core {
 			
 			// Check if pattern is empty
 			if($interface_pattern == '') {
-				continue;
+				throw new ErrorException('Interface ['.$interface_name.'] pattern cannot be empty!');
 			}
 			
 			$preg_pattern = preg_quote($interface_pattern, '#');
@@ -89,7 +96,7 @@ class routing extends routing_core {
 					$config->section_get($interface_name)
 				);
 				
-				$interface['interface_name'] = $interface_name;
+				$result['request']['interface_name'] = $interface_name;
 				
 				// Interface matches, Break the loop.
 				break;
@@ -99,39 +106,40 @@ class routing extends routing_core {
 		
 		unset($config);
 		
+		// First Initialization stage is complete
+		$result['request']['url'] = $url;
+		$result['interface'] = $interface;
+		
 		// Parse and define URL parts
-		$interface['url'] = $url;
-		$interface = array_merge(
-			$interface,
-			self::parse_interface_url($interface)
-		);
+		$result = self::parse_interface_url($result);
 		
 		// After URL Initialization, let's parse the language and split the URL parts/params
-		$interface = self::parse_language_and_params($interface);
+		$result = self::parse_language_and_params($result);
 		
 		// Parse The interface Addon/Action
-		$interface = self::parse_addon_action($interface);
+		$result = self::parse_addon_action($result);
 		
 		// Return interface as array
-		return $interface;
+		return $result;
 		
 	} // End func parse_interface
 	
-	private static function parse_interface_url($interface) {
+	private static function parse_interface_url($data) {
 		
-		$url = $interface['url'];
-		$pattern = $interface['pattern'];
+		$url = $data['request']['url'];
+		$pattern = $data['interface']['pattern'];
 		
-		$interface['https'] = 0;
-		$interface['subdomains'] = array();
-		$interface['hostname'] = '';
-		$interface['url_parts'] = '';
-		$interface['url_params'] = '';
-		$interface['interface_path'] = '';
+		$data['request']['https'] = 0;
+		$data['request']['subdomains'] = array();
+		$data['request']['hostname'] = '';
+		$data['request']['url_parts'] = '';
+		$data['request']['url_params'] = '';
+		$data['request']['interface_path'] = '';
+		$data['request']['base_url'] = '';
 		
 		// Define HTTPS
 		if(isset($_SERVER['HTTPS']) and $_SERVER['HTTPS'] != 'off') {
-			$interface['https'] = 1;
+			$data['request']['https'] = 1;
 		}
 		
 		// Define hostname
@@ -139,61 +147,62 @@ class routing extends routing_core {
 		
 		if($pos !== false) {
 			
-			$interface['hostname'] = substr($url, 0, $pos);
+			$data['request']['hostname'] = substr($url, 0, $pos);
 			
 			// Define URL Parts
-			$interface['url_parts'] = trim(substr($url, $pos), '/');
+			$data['request']['url_parts'] = trim(substr($url, $pos), '/');
 						
 		} else {
-			$interface['hostname'] = $url;
+			$data['request']['hostname'] = $url;
 		}
 		
 		// Parse sub-domain(s) if any.
-		$interface['subdomains'] = explode('.', $interface['hostname']);
+		$data['request']['subdomains'] = explode('.', $data['request']['hostname']);
 		
 		// Define base url if not defined
-		if($interface['base_url'] == '') {
+		if($data['interface']['base_url'] == '') {
 			
-			if($interface['https'] == true) {
-				$interface['base_url'] = 'https://';
+			if($data['request']['https'] == true) {
+				$data['request']['base_url'] = 'https://';
 			} else {
-				$interface['base_url'] = 'http://';
+				$data['request']['base_url'] = 'http://';
 			}
 			
-			$interface['base_url'] .= $interface['hostname'];
+			$data['request']['base_url'] .= $data['request']['hostname'];
 			
 			$build_base_url = true;
 		} else {
+			$data['request']['base_url'] = $data['interface']['base_url'];
 			$build_base_url = false;
 		}
 		
 		// No more things to parse
-		if($interface['url_parts'] == '' or $pattern == '') {
-			$interface['url_params'] = $interface['url_parts'];
-			return $interface;
+		if($data['request']['url_parts'] == '' or $pattern == '') {
+			$data['request']['url_params'] = $data['request']['url_parts'];
+			return $data;
 		}
 				
 		// Define other parts
 		$pos = strpos($pattern, '/');
 		
 		if($pos === false) {
-			$interface['url_params'] = $interface['url_parts'];
-			return $interface;
+			$data['request']['url_params'] = $data['request']['url_parts'];
+			return $data;
 		}
 			
 		$interface_path = substr($pattern, $pos);
 		$interface_path = str_replace('*', '', $interface_path);
-		$interface['interface_path'] = $interface_path;
+		$data['request']['interface_path'] = $interface_path;
 		
 		// Add Interface path to base URL
 		if($build_base_url == true) {
-			$interface['base_url'] .= $interface['interface_path'];
+			$data['request']['base_url'] .= $data['interface_path'];
 		}
 		
-		$url_params = substr($interface['url_parts'], strlen($interface_path));
-		$interface['url_params'] = trim($url_params, '/');
+		$url_params = substr($data['request']['url_parts'], strlen($interface_path));
+		$data['request']['url_params'] = trim($url_params, '/');
 		
-		return $interface;
+		return $data;
 		
 	} // End func clean_interface_url
 	
@@ -216,53 +225,53 @@ class routing extends routing_core {
 		return $ret_arr;
 	}
 	
-	private static function parse_language_and_params($interface) {
+	private static function parse_language_and_params($data) {
 		
 		// Explode parameters to array
-		$interface['url_parts'] = self::explode_to_array($interface['url_parts']);
-		$interface['url_params'] = self::explode_to_array($interface['url_params']);
+		$data['request']['url_parts'] = self::explode_to_array($data['request']['url_parts']);
+		$data['request']['url_params'] = self::explode_to_array($data['request']['url_params']);
 		
 		// Set Default language prefix.
-		$interface['language_prefix'] = $interface['default_language'];
+		$data['request']['language_prefix'] = $data['interface']['default_language'];
 		
 		// Define Allowed languages array for check.
-		$interface['allowed_languages'] = explode('|', $interface['allowed_languages']);
+		$data['request']['allowed_languages'] = explode('|', $data['interface']['allowed_languages']);
 		
 		// First check, if url parameters is empty, then define language prefix and return interface.
-		if(empty($interface['url_params'])) {
-			$interface['language_prefix'] = self::catch_if_browser_language($interface);
-			return $interface;
+		if(empty($data['request']['url_params'])) {
+			$data['request']['language_prefix'] = self::catch_if_browser_language($data);
+			return $data;
 		}
 		
 		// Check, if parsing language from URL is not enabled.
-		if(!$interface['parse_url_language']) {
-			$interface['language_prefix'] = self::catch_if_browser_language($interface);
-			return $interface;
+		if(!$data['interface']['parse_url_language']) {
+			$data['request']['language_prefix'] = self::catch_if_browser_language($data);
+			return $data;
 		}
 		
 		// Check, if allowed to catch 
-		if(in_array($interface['url_params'][0], $interface['allowed_languages'])) {
-			$interface['language_prefix'] = array_shift($interface['url_params']);
+		if(in_array($data['request']['url_params'][0], $data['request']['allowed_languages'])) {
+			$data['request']['language_prefix'] = array_shift($data['request']['url_params']);
 		} else {
-			$interface['language_prefix'] = $interface['default_language'];
+			$data['request']['language_prefix'] = $data['interface']['default_language'];
 		}
 		
-		return $interface; 
+		return $data;
 		
 	}
 	
-	private static function catch_if_browser_language($interface) {
+	private static function catch_if_browser_language($data) {
 		
 		// Not allowed to catch browser language.
 		// Just set Default language of interface.
-		if($interface['catch_browser_language'] != 1) {
-			return $interface['default_language'];
+		if($data['interface']['catch_browser_language'] != 1) {
+			return $data['interface']['default_language'];
 		}
 		
 		$browser_languages = lib::instance()->client->languages();
 		
 		if(empty($browser_languages)) {
-			return $interface['default_language'];
+			return $data['interface']['default_language'];
 		}
 		
 		foreach($browser_languages as $language) {
@@ -270,35 +279,35 @@ class routing extends routing_core {
 			$tmp = explode('-', $language);
 			$prefix = $tmp[0];
 			
-			if(in_array($prefix, $interface['allowed_languages'])) {
+			if(in_array($prefix, $data['request']['allowed_languages'])) {
 				return $prefix;
 			}
 			
 		}
 		
-		return $interface['default_language'];
+		return $data['interface']['default_language'];
 	}
 	
-	private static function parse_addon_action($interface) {
+	private static function parse_addon_action($data) {
 		
 		// Set defaults
-		$interface['addon'] = $interface['default_callable_addon']; 
-		$interface['action'] = $interface['default_callable_action'];
+		$data['request']['addon'] = $data['interface']['default_callable_addon'];
+		$data['request']['action'] = $data['interface']['default_callable_action'];
 			
-		if(empty($interface['url_params'])) {
-			return $interface;
+		if(empty($data['request']['url_params'])) {
+			return $data;
 		}
 		
-		$interface = array_merge($interface, self::parse_route($interface));
-					
-		$interface['addon'] = array_shift($interface['url_params']);
-			
-		if(!empty($interface['url_params'])) {
-			$interface['action'] = array_shift($interface['url_params']);
-		} 
+		$data = array_merge($data, self::parse_route($data));
 		
-		$interface['addon'] = strtolower($interface['addon']);
-		$interface['action'] = strtolower($interface['action']);
+		$data['request']['addon'] = array_shift($data['request']['url_params']);
+			
+		if(!empty($data['request']['url_params'])) {
+			$data['request']['action'] = array_shift($data['request']['url_params']);
+		}
+		
+		$data['request']['addon'] = strtolower($data['request']['addon']);
+		$data['request']['action'] = strtolower($data['request']['action']);
 		
 		/*
 		 * Check, if application allowed to parse URLs with dashed segments.
@@ -309,12 +318,12 @@ class routing extends routing_core {
 		 * url_params: param-1, param-2
 		 * Notice: in routes configuration dashes is allowed by default.
 		 */
-		if($interface['allow_url_dashes'] == 1) {
-			$interface['addon'] = str_replace('-', '_', $interface['addon']);
-			$interface['action'] = str_replace('-', '_', $interface['action']);
+		if($data['interface']['allow_url_dashes'] == 1) {
+			$data['request']['addon'] = str_replace('-', '_', $data['request']['addon']);
+			$data['request']['action'] = str_replace('-', '_', $data['request']['action']);
 		}
 		
-		return $interface;
+		return $data;
 	}
 	
 	/**
@@ -322,26 +331,26 @@ class routing extends routing_core {
 	 *
 	 * @static
 	 * @access public
-	 * @param array $interface
+	 * @param array $data
 	 * @return array|bool
 	 */
-	static public function parse_route($interface) {
+	static public function parse_route($data) {
 		
-		$q_arr = $interface['url_params'];
+		$q_arr = $data['request']['url_params'];
 		
-		$interface['route_parsed'] = '';
+		$data['request']['route_parsed'] = '';
 				
 		$routes_ini = lib::instance()->ini->instance(TK_APP_PATH . 'config' . TK_DS . 'routes.ini');
 				
 		// Check if this interface inherited another (excepts tokernel_default).
-		if($interface['inherited'] != '' and $interface['inherited'] != 'tokernel_default') {
-			$parent_interface_routes = $routes_ini->section_get($interface['inherited']);
+		if($data['interface']['inherited'] != '' and $data['interface']['inherited'] != 'tokernel_default') {
+			$parent_interface_routes = $routes_ini->section_get($data['interface']['inherited']);
 		} else {
 			$parent_interface_routes = array();
 		}
 		
 		// Load actual Routes for interface
-		$routes = $routes_ini->section_get($interface['interface_name']);
+		$routes = $routes_ini->section_get($data['request']['interface_name']);
 		
 		if(empty($routes)) {
 			$routes = array();
@@ -352,7 +361,7 @@ class routing extends routing_core {
 		
 		// Now we have to check, if interface routes not empty
 		if(empty($routes)) {
-			return $interface;
+			return $data;
 		}
 		
 		$nqs = array();
@@ -366,19 +375,19 @@ class routing extends routing_core {
 			$nqs = parent::compare_route($q_arr, $r_arr, $v_arr);
 			
 			if($nqs !== false) {
-								
-				$interface['route_parsed'] = $item.'='.$value;
-				$interface['url_params_orig'] = $interface['url_params'];
-				$interface['url_params'] = $nqs;
 				
-				return $interface;
+				$data['request']['route_parsed'] = $item.'='.$value;
+				$data['request']['url_params_orig'] = $data['request']['url_params'];
+				$data['request']['url_params'] = $nqs;
+				
+				return $data;
 			}
 			
 		}
 				
 		unset($routes_ini);
 		
-		return $interface;
+		return $data;
 		
 	} // End func parse_route
 	

@@ -101,14 +101,6 @@ abstract class app_core {
 	protected $config;
 	
 	/**
-	 * Application log instance
-	 *
-	 * @var object
-	 * @access protected
-	 */
-	protected $log;
-	
-	/**
 	 * Language object for application
 	 *
 	 * @var object
@@ -125,7 +117,7 @@ abstract class app_core {
 	protected $hooks;
 	
 	/**
-	 * Constructor is final and protected for singlton instance
+	 * Constructor is final and protected for singleton instance
 	 *
 	 * @final
 	 * @access protected
@@ -140,14 +132,17 @@ abstract class app_core {
 	 */
 	public function __destruct() {
 		unset(self::$instance->config);
-		unset(self::$instance->log);
 		unset(self::$instance->language);
+		unset(self::$instance->hooks);
+		unset(self::$instance->lib);
 		unset(self::$instance->request);
 		unset(self::$instance->response);
+		unset(self::$instance->addons);
 	} // end func _destruct
 	
 	/**
-	 * Singleton function to return one instance of this class.
+	 * Return Application Singleton object.
+	 * Initialize Application core in first call.
 	 *
 	 * @final
 	 * @throws Exception
@@ -165,14 +160,11 @@ abstract class app_core {
 		
 		tk_e::log_debug('Start', 'app::' . __FUNCTION__);
 		
-		/*
-		 * Set name of child class and
-		 * initialize instance object.
-		 */
+		/* Initialize Application object. */
 		$obj = 'app';
 		self::$instance = new $obj;
 		
-		/* Load library object */
+		/* Load library loader object */
 		self::$instance->lib = lib::instance();
 		
 		/* Load request object */
@@ -181,37 +173,25 @@ abstract class app_core {
 		/* Load response object */
 		self::$instance->response = response::instance();
 		
-		/* Load addons object */
+		/* Load addons loader object */
 		self::$instance->addons = addons::instance();
 		
-		/* Load configuration */
-		self::$instance->config = self::$instance->lib->ini->instance(
-			TK_APP_PATH . 'config' . TK_DS . 'application.ini');
-		
-		tk_e::log_debug('Loaded "config" object', 'app::' . __FUNCTION__);
-		
-		if(!self::$instance->config) {
-			throw new Exception('toKernel - Universal PHP Framework v' . TK_VERSION .
-				'. Application configuration file is not readable.', E_USER_ERROR);
-		}
-		
-		/* Set error reporting by application mode */
+		/* Load Application configuration */
+		self::$instance->config = self::$instance->lib->ini->instance(TK_APP_PATH . 'config' . TK_DS . 'application.ini');
+				
+		/* Set error reporting by application run mode */
 		if(self::$instance->config->item_get('app_mode', 'RUN_MODE') == 'production') {
-			error_reporting(E_ALL & ~E_NOTICE); // E_ALL ^ E_NOTICE
+			error_reporting(E_ALL & ~E_NOTICE);
 		} else {
 			error_reporting(E_ALL);
 		}
-		
-		/* Load log instance */
-		self::$instance->log = self::$instance->lib->log->instance('application.log');
-		tk_e::log_debug('Loaded "log" object', 'app::' . __FUNCTION__);
-		
-		/* Initialization by application mode */
-		if(TK_RUN_MODE == 'http') {
+				
+		/* Initialization by application mode specific. */
+		if(TK_RUN_MODE == TK_HTTP_MODE) {
 			
 			tk_e::log_debug('Running in HTTP mode', 'app::' . __FUNCTION__);
 			
-			/* Check, is http mode allowed */
+			/* Check, if http mode not allowed */
 			if(self::$instance->config->item_get('allow_http', 'HTTP') != 1) {
 				
 				tk_e::log_debug('HTTP mode not allowed', 'app::' . __FUNCTION__);
@@ -221,9 +201,15 @@ abstract class app_core {
 			}
 			
 			/* Initialize Request */
-			self::$instance->request->init(self::$instance->config);
-						
-		} elseif(TK_RUN_MODE == 'cli') {
+			/* Get Parsed configuration of HTTP Interface and merge with HTTP Configuration */
+			self::$instance->config->section_set(
+				'HTTP',
+				self::$instance->request->init(self::$instance->config)
+			);
+			
+			/* @todo check if under maintenance */
+									
+		} elseif(TK_RUN_MODE == TK_CLI_MODE) {
 			
 			tk_e::log_debug('Running in CLI mode', 'app::' . __FUNCTION__);
 			
@@ -232,25 +218,16 @@ abstract class app_core {
 				
 				tk_e::log_debug('CLI mode not allowed', 'app::' . __FUNCTION__);
 				
-				throw new tk_e('toKernel - Universal PHP Framework v' . TK_VERSION
-					. '. CLI mode not allowed.', E_USER_ERROR);
+				throw new Exception('toKernel - Universal PHP Framework v' . TK_VERSION . '. CLI mode not allowed.', E_USER_ERROR);
 			}
-									
+			
 			/* Initialize Request */
-			self::$instance->config->section_set(
-				'HTTP_INTERFACE',
-				self::$instance->request->init($argv, self::$instance->config)
-			);
+			self::$instance->request->init($argv, self::$instance->config);
 						
 		} // end run mode
 		
 		$language_prefix = self::$instance->request->language_prefix();
-		
-		if($language_prefix == '') {
-			tk_e::log_debug('Language prefix is invalid. Set to default "en"', 'app::' . __FUNCTION__);
-			$language_prefix = 'en';
-		}
-		
+				
 		/* Set timezone for application */
 		ini_set('date.timezone', self::$instance->config->item_get('date_timezone', 'APPLICATION'));
 		
@@ -310,53 +287,8 @@ abstract class app_core {
 	 */
 	final public function __clone() {
 		trigger_error('Cloning the object is not permitted ('.__CLASS__.')', E_USER_ERROR );
-		
 	} // end func __clone
-	
-	/**
-	 * Return application init status
-	 *
-	 * @access public
-	 * @return bool
-	 */
-	public static function initialized() {
-		return self::$initialized;
-	}
-	
-	/**
-	 * Return application run status
-	 *
-	 * @access public
-	 * @return bool
-	 */
-	public static function runned() {
-		return self::$runned;
-	}
-	
-	/**
-	 * Error function, will call tk_e::error()
-	 *
-	 * @access public
-	 * @param integer $code
-	 * @param string $message
-	 * @param string $file
-	 * @param integer $line
-	 * @return void
-	 */
-	public function error($code, $message, $file = NULL, $line = NULL) {
 		
-		if(is_null($file)) {
-			$file = __FILE__;
-		}
-		
-		if(is_null($line)) {
-			$line = __LINE__;
-		}
-		
-		tk_e::error($code, $message, $file, $line);
-		
-	} // end func error
-	
 	/**
 	 * Return application configuration array if item
 	 * is NULL. Else, return config value by item.
@@ -367,13 +299,7 @@ abstract class app_core {
 	 * @return mixed
 	 */
 	public function config($item, $section = NULL) {
-		
-		if(!isset(self::$instance)) {
-			trigger_error('Application is not initialized. Instance is empty (' . __CLASS__.')',  E_USER_ERROR );
-		}
-		
 		return $this->config->item_get($item, $section);
-		
 	} // end func config
 	
 	/**
@@ -384,51 +310,5 @@ abstract class app_core {
 	 * @return void
 	 */
 	abstract public function run();
-	
-	/**
-	 * Return Timezones from configuration file.
-	 * return timezone by section name is set.
-	 *
-	 * @access public
-	 * @param  string $section
-	 * @return array
-	 * @since  1.1.0
-	 */
-	public function timezones($section = NULL) {
-		
-		if(!isset(self::$instance)) {
-			trigger_error('Application instance is empty ('.__CLASS__.')',
-				E_USER_ERROR );
-		}
-		
-		$tk_timezone_file = TK_PATH . 'config' . TK_DS . 'timezones.ini';
-		$app_timezone_file = TK_APP_PATH . 'config' . TK_DS . 'timezones.ini';
-		
-		if(is_readable($app_timezone_file)) {
-			$timezone_file = $app_timezone_file;
-		} elseif(is_readable($tk_timezone_file)) {
-			$timezone_file = $tk_timezone_file;
-		} else {
-			trigger_error('File `'.$tk_timezone_file.'` not exists', E_USER_ERROR);
-			return false;
-		}
-		
-		$data_arr = array();
-		
-		if(!is_null($section)) {
-			$ini = $this->lib->ini->instance($timezone_file, $section, false);
-			$data_arr = $ini->section_get($section);
-		} else {
-			$ini = $this->lib->ini->instance($timezone_file, NULL, false);
-			$sections = $ini->sections();
 			
-			foreach($sections as $section) {
-				$data_arr[$section] = $ini->section_get($section);
-			}
-		}
-		
-		return $data_arr;
-		
-	} // end func timezones
-		
 } /* End of class app_core */

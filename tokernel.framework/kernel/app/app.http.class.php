@@ -126,7 +126,10 @@ class app extends app_core {
 			 * Trying to get cached content.
 			 * Will return false if cache expired or not exists.
 			 */
-			$cached_content = $cache->get_content($this->lib->url->url(true, true, true), $ce_);
+			$cached_content = $cache->get_content(
+				$this->request->url(),
+				$ce_
+			);
 			
 			/*
 			 * Cached content is not empty.
@@ -179,18 +182,7 @@ class app extends app_core {
 		
 		/* Load main callable addon object */
 		$addon = $this->addons->load($id_addon);
-		
-		/* Check, is addon is object */
-		if(!is_object($addon)) {
-			
-			tk_e::log('`'.$id_addon.'` - $addon is not an object returned ' .
-				'by $this->addons->load() !', E_USER_ERROR,
-				__FILE__, __LINE__);
-			
-			$this->error_404('Addon `'.$id_addon.'` is not an object.',
-				__FILE__, __LINE__);
-		}
-		
+				
 		/* Check, is addon allowed under current run mode */
 		if($addon->config('allow_http', 'CORE') != '1') {
 			trigger_error('Addon "'.$id_addon.'" cannot run under HTTP mode!',
@@ -228,7 +220,7 @@ class app extends app_core {
 		/* Get buffered result of addon's action. */
 		ob_start();
 		
-		//call_user_func_array(array($addon, $function_to_call), $this->params());
+		/* Call adon's action */
 		$addon->$function_to_call($this->request->url_params());
 		
 		$addon_called_func_buffer = ob_get_contents();
@@ -278,8 +270,12 @@ class app extends app_core {
 		 * Try to write content to cache.
 		 */
 		if(($ce_ > 0 or $ce_ == '-1') and $this->request->method() == 'GET') {
-									
-			$cache->write_content($this->lib->url->url(true, true, true), $content_to_output, $ce_);
+			
+			$cache->write_content(
+				$this->request->url(),
+				$content_to_output,
+				$ce_
+			);
 			
 		} // end checking cache_expiration
 		

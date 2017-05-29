@@ -172,7 +172,7 @@ class addons {
 
 		/* Check id addon class exist */
 		if(!class_exists($addon_lib_class)) {
-			trigger_error('Class ' . $addon_lib_class . ' not exists in addon ' . $id_addon . ' library!', E_USER_WARNING);
+			trigger_error('Class ' . $addon_lib_class . ' not exists in addon ' . $id_addon . ' library!', E_USER_ERROR);
 			return false;
 		}
 		

@@ -334,18 +334,15 @@ class request {
 			$_SERVER['QUERY_STRING'] = trim($_SERVER['QUERY_STRING']);
 		}
 		
-		// Clean up Globals and URL params if allowed
-		
-		///////####################/////////################/////////////##########
-		
 		// Initialize interface configuration
 		$request_url = $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-		$this->config = routing::parse_http_interface($request_url);
+		$result = routing::parse_http_interface($request_url);
+		$this->config = $result['request'];
 				
 		self::$initialized = true;
-		
-		return $this->config;
-		
+				
+		return $result['interface'];
+				
 	} // End func init
 		
 	/**
@@ -407,6 +404,10 @@ class request {
 	 */
 	public function base_url() {
 		return $this->base_url;
+	}
+	
+	public function url() {
+		return $this->config['url'];
 	}
 	
 	/**

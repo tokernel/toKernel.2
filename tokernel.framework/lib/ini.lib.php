@@ -24,7 +24,7 @@
  * @author      toKernel development team <framework@tokernel.com>
  * @copyright   Copyright (c) 2017 toKernel
  * @license     http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version     1.3.1
+ * @version     1.3.2
  * @link        http://www.tokernel.com
  * @since       File available since Release 1.0.0
  * @todo        Create functions - sync, compare.
@@ -448,12 +448,17 @@ class ini_lib {
     public function section_set($section, $items = array()) {
 
         $section = trim($section);
-
-        if($this->section_exists($section) or !$this->is_valid($section)) {
-            return false;
+	    
+        /* Check for valid section name */
+        if(!$this->is_valid($section)) {
+        	trigger_error('Invalid section name `'.$section.'`!', E_USER_WARNING);
+        	return false;
         }
-
-        $this->ini_arr[$section] = array();
+        
+        /* Create new section if not exists */
+        if(!$this->section_exists($section)) {
+	        $this->ini_arr[$section] = array();
+        }
 
         if(count($items) > 0) {
             foreach($items as $item => $value) {

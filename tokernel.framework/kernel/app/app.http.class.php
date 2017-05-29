@@ -385,14 +385,14 @@ class app extends app_core {
 		if($this->config->item_get('log_errors_404', 'ERROR_HANDLING') == 1) {
 			$log_ext = $this->config->item_get('log_file_extension', 'ERROR_HANDLING');
 			$log_obj = $this->lib->log->instance('error_404.' . $log_ext);
-			$log_obj->write($message . '  CLIENT IP: ' .$remote_address . ' | URL: ' . $this->request->query_string() . ' | FILE: ' . $file . ' | LINE: ' . $line);
+			$log_obj->write($message . '  CLIENT IP: ' .$remote_address . ' | URL: ' . $this->request->url() . ' | FILE: ' . $file . ' | LINE: ' . $line);
 		}
 		
 		$this->response->set_status(404);
 		
 		if($this->request->is_ajax()) {
 			
-			tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->request->query_string() . '"',	'app->'.__FUNCTION__);
+			tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->request->url() . '"',	'app->'.__FUNCTION__);
 			tk_e::log_debug('', ':============= END WITH ERROR 404 ==============');
 			
 			$this->response->set_content($this->language('err_404_subject'));
@@ -431,7 +431,7 @@ class app extends app_core {
 		
 		self::$runned = true;
 		
-		tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->request->query_string() . '"',	'app->'.__FUNCTION__);
+		tk_e::log_debug($message . ' CLIENT IP: ' .$remote_address . ' | URL: "'. $this->request->url() . '"',	'app->'.__FUNCTION__);
 		tk_e::log_debug('', ':============= END WITH ERROR 404 ==============');
 		
 		exit();

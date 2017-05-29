@@ -40,13 +40,13 @@ defined('TK_EXEC') or die('Restricted area.');
 class hooks_base {
 	
 	/**
-	 * Library object for working with
-	 * libraries in this class
+	 * Main Application object for
+	 * accessing app functions from this class
 	 *
 	 * @var object
 	 * @access protected
 	 */
-	protected $lib;
+	protected $app;
 	
 	/**
 	 * Main Addons object for accessing all addons
@@ -57,13 +57,29 @@ class hooks_base {
 	protected $addons;
 	
 	/**
-	 * Main Application object for
-	 * accessing app functions from this class
+	 * Library object for working with
+	 * libraries in this class
 	 *
 	 * @var object
 	 * @access protected
 	 */
-	protected $app;
+	protected $lib;
+	
+	/**
+	 * Request object instance
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $request;
+	
+	/**
+	 * Response object instance
+	 *
+	 * @var object
+	 * @access protected
+	 */
+	protected $response;
 	
 	/**
 	 * Status of hooks loaded
@@ -85,9 +101,11 @@ class hooks_base {
 			trigger_error('Hooks is already loaded in app::run().', E_USER_ERROR);
 		}
 		
-		$this->lib = lib::instance();
 		$this->app = app::instance();
 		$this->addons = addons::instance();
+		$this->lib = lib::instance();
+		$this->request = request::instance();
+		$this->response = response::instance();
 		
 		self::$_loaded = true;
 		

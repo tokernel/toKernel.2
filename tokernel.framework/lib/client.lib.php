@@ -26,7 +26,7 @@
  * @author     toKernel development team <framework@tokernel.com>
  * @copyright  Copyright (c) 2017 toKernel
  * @license    http://www.gnu.org/copyleft/gpl.html GNU Public License
- * @version    1.0.0
+ * @version    1.1.0
  * @link       http://www.tokernel.com
  * @since      File available since Release 1.0.4
  */
@@ -158,7 +158,6 @@ class client_lib {
 	 * Class constructor
 	 *
 	 * @access public
-	 * @return bool
 	 */
 	public function __construct() {
 		
@@ -557,7 +556,7 @@ class client_lib {
 	 * Return string of defined client information
 	 *
 	 * @access public
-	 * @return atring
+	 * @return string
 	 */
 	public function client_str() {
 		
@@ -589,5 +588,36 @@ class client_lib {
 		return $buf;
 		
 	} // End func client_str
+	
+	/**
+	 * Return Client IP Address
+	 *
+	 * @access public
+	 * @return string
+	 * @since 1.1.0
+	 */
+	public function ip() {
+		
+		$ip = '';
+		
+		// Case 1. Get from HTTP_X_FORWARDED_FOR
+		if(isset($_SERVER['HTTP_X_FORWARDED_FOR']) and $_SERVER['HTTP_X_FORWARDED_FOR'] != '') {
+			
+			$ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+			
+			if(strpos($ip, ',')) {
+				$exp_ip = explode(',', $ip);
+				$ip = $exp_ip[0];
+			}
+			
+		} elseif(isset($_SERVER['HTTP_CLIENT_IP']) and $_SERVER['HTTP_CLIENT_IP'] != '') {
+			$ip = $_SERVER['HTTP_CLIENT_IP'];
+		} elseif(isset($_SERVER["REMOTE_ADDR"])) {
+			$ip = $_SERVER["REMOTE_ADDR"];
+		}
+				
+		return $ip;
+		
+	} // End func ip
 	
 } /* End of class client_lib */

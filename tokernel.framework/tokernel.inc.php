@@ -60,7 +60,7 @@ define('TK_EXEC', true);
  * /var/lib/tokernel.framework/
  * /home/{your_username}/tokernel.framework/
  * /home/{your_username}/public_html/tokernel.framework/
- * /usr/local/lib/my-web-framework-core (as you can see, the framework directory name has been renamed).
+ * /usr/local/lib/my-web-framework-core/ (as you can see, the framework directory name has been renamed).
  */
 define('TK_PATH', dirname(__FILE__) . DIRECTORY_SEPARATOR);
 
@@ -151,7 +151,6 @@ require_once(TK_APP_PATH . 'config' . TK_DS . 'constants.php');
 		
 /* Load main library loader class from Framework's kernel. */
 require_once(TK_PATH . 'kernel' . TK_DS . 'loaders' . TK_DS . 'lib.class.php');
-$lib = lib::instance();
 
 // Include routing library
 require_once(TK_PATH . 'kernel' . TK_DS . 'routing' . TK_DS . 'routing.core.class.php');
@@ -188,17 +187,10 @@ ini_set('display_errors', 1);
 require_once(TK_PATH . 'kernel'.TK_DS.'request'.TK_DS.'request.'.TK_RUN_MODE.'.class.php');
 require_once(TK_PATH . 'kernel'.TK_DS.'response'.TK_DS.'response.'.TK_RUN_MODE.'.class.php');
 
-/* Load application configuration object */
-$config = $lib->ini->instance(TK_APP_PATH . 'config' . TK_DS . 'application.ini', 'RUN_MODE');
-
-if(!is_object($config)) {
-	trigger_error('Application configuration file is not readable or corrupted.', E_USER_ERROR);
-	exit(1);
-}
-
 /* Configure run mode for error and exception handlers */
-tk_e::configure_run_mode($config->section_get('RUN_MODE'));
-unset($config);
+tk_e::configure_run_mode(
+	lib::instance()->ini->instance(TK_APP_PATH . 'config' . TK_DS . 'application.ini', 'RUN_MODE')->section_get('RUN_MODE')
+);
 
 tk_e::log_debug('', ':==================== START ====================');
 
@@ -222,7 +214,7 @@ tk_e::log_debug('Loading app base addon, module, model, view classes.', 'Loader'
 require_once(TK_APP_PATH . 'base' . TK_DS . 'base_module.class.php');
 
 /* Include all Base files from application/base/* */
-$app_base_files = $lib->file->ls(TK_APP_PATH . 'base', '-', false, 'php');
+$app_base_files = lib::instance()->file->ls(TK_APP_PATH . 'base', '-', false, 'php');
 
 if(!empty($app_base_files)) {
     foreach($app_base_files as $file) {
@@ -232,26 +224,21 @@ if(!empty($app_base_files)) {
 
 unset($app_base_files);
 
-tk_e::log_debug('Loading app instance', 'Loader');
-
-/* Create application instance. */
-$app = app::instance($argv);
-
 /* Include hooks */
 require_once(TK_PATH . 'base' . TK_DS . 'hooks_base.class.php');
 require_once(TK_APP_PATH . 'hooks' . TK_DS . 'hooks.class.php');
 
-/* Run application. */
-if(!$app->run()) { 
-	trigger_error('Run Application failed!', E_USER_ERROR);
-}
- 
+tk_e::log_debug('Loading app instance', 'Loader');
+
+/* Initialize and run Application instance. */
+app::instance($argv)->run();
+
 /* Define end time/duration for debug information. */
 define('TK_END_RUN', round(microtime(true), 3));
 define('TK_RUN_DURATION', round((TK_END_RUN - TK_START_RUN), 3));
 
 tk_e::log_debug('Runtime duration: '.TK_RUN_DURATION.' seconds', 'Loader');
-tk_e::log_debug('Memory usage: '.$lib->file->format_size(memory_get_peak_usage()), 'Loader');
+tk_e::log_debug('Memory usage: '.lib::instance()->file->format_size(memory_get_peak_usage()), 'Loader');
 tk_e::log_debug('', ':===================== END =====================');
 
 /* End of file */

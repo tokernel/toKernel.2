@@ -54,39 +54,7 @@ class request {
 	 * @staticvar bool
 	 */
 	private static $initialized = false;
-	
-	/**
-	 * Language prefix
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $language_prefix = 'en';
-	
-	/**
-	 * CLI parameters
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $params = array();
-	
-	/**
-	 * CLI requested addon
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $addon;
-	
-	/**
-	 * CLI requested action
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $action;
-	
+			
 	/**
 	 * Library object for working with
 	 * libraries in this class
@@ -96,8 +64,20 @@ class request {
 	 */
 	protected $lib;
 	
+	/**
+	 * Response object instance
+	 *
+	 * @access private
+	 * @var object
+	 */
 	private $response;
 	
+	/**
+	 * CLI Request Configuration
+	 *
+	 * @access private
+	 * @var array
+	 */
 	private $config;
 	
 	/**
@@ -157,7 +137,7 @@ class request {
 		if(self::$initialized == true) {
 			throw new ErrorException('Request initialization - ' . __CLASS__ . '->' . __FUNCTION__ . '() is already initialized!');
 		}
-		
+				
 		// For the first, cleanup all arguments if set in config 1
 		/* Clean command line arguments by configuration */
 		if($config->item_get('cli_auto_clean_args', 'CLI') == 1) {
@@ -190,18 +170,20 @@ class request {
 		
 		tk_e::log_debug('Parsing arguments', __CLASS__.'->'.__FUNCTION__);
 		
-		$this->config = routing::parse_cli_interface($args);
+		/* Parse Routing and set configuration */
+		$this->config = routing::parse_cli($args);
+		
+		// Clean Addon and Action names if requested with "--" symbols.
+		$this->config['addon'] = $this->clean_arg($this->config['addon']);
+		$this->config['action'] = $this->clean_arg($this->config['action']);
 		
 		// Check if action not empty.
 		if($this->config['action'] == '') {
 			$this->response->output_usage("Action is empty.");
-			exit(0);
+			exit(1);
 		}
 								
 		self::$initialized = true;
-		print_r($this->config);
-		exit();
-		tk_e::log_debug('End with params - "' . implode(',', $this->params) . '"', __CLASS__.'->'.__FUNCTION__);
 		
 		return true;
 		
@@ -225,7 +207,7 @@ class request {
 	 * @return string
 	 */
 	public function language_prefix() {
-		return $this->language_prefix;
+		return $this->config['language_prefix'];
 	}
 	
 	/**
@@ -235,7 +217,7 @@ class request {
 	 * @return string
 	 */
 	public function addon() {
-		return $this->addon;
+		return $this->config['addon'];
 	}
 	
 	/**
@@ -245,27 +227,9 @@ class request {
 	 * @return string
 	 */
 	public function action() {
-		return $this->action;
+		return $this->config['action'];
 	}
 		
-	/**
-	 * Clean argument
-	 * Remove first "--" chars if exists.
-	 *
-	 * @access protected
-	 * @param mixed
-	 * @return string
-	 */
-	protected function clean_arg($arg) {
-		
-		if(substr($arg, 0, 2) == '--') {
-			$arg = substr($arg, 2);
-		}
-		
-		return $arg;
-		
-	} // End func clean_arg
-	
 	/**
 	 * Return parameter value by name or parameters array
 	 *
@@ -277,12 +241,12 @@ class request {
 		
 		/* Return parameters array */
 		if(is_null($item)) {
-			return $this->params;
+			return $this->config['cli_params'];
 		}
 		
 		/* Return parameter value by name */
-		if(isset($this->params[$item])) {
-			return $this->params[$item];
+		if(isset($this->config['cli_params'][$item])) {
+			return $this->config['cli_params'][$item];
 		}
 		
 		/* Parameter not exists */
@@ -296,8 +260,26 @@ class request {
 	 * @access public
 	 * @return integer
 	 */
-	public function params_count() {
-		return count($this->params);
+	public function cli_params_count() {
+		return count($this->config['cli_params']);
 	}
+	
+	/**
+	 * Clean argument
+	 * Remove first "--" chars if exists.
+	 *
+	 * @access protected
+	 * @param string $arg
+	 * @return string
+	 */
+	protected function clean_arg($arg) {
+		
+		if (substr($arg, 0, 2) == '--') {
+			$arg = substr($arg, 2);
+		}
+		
+		return $arg;
+		
+	} // End func clean_arg
 		
 } /* End class request */

@@ -55,15 +55,7 @@ class response {
 	 * @access private
 	 */
 	private $lib;
-	
-	/**
-	 * Status code
-	 *
-	 * @var int
-	 * @access protected
-	 */
-	private $status = 0;
-	
+		
 	/**
 	 * Is colored output enabled.
 	 * Detect this option by OS.
@@ -263,7 +255,7 @@ class response {
 		$message .= " {addon_name}";
 		$message .= " {action_name}";
 		
-		$message .= " [argument_1] [argument_2]";
+		$message .= " [argument_1] [argument_N]";
 		$message .= TK_NL;
 		
 		$this->output($message, 'white');
@@ -279,14 +271,14 @@ class response {
 	public function output_colors() {
 		
 		if(empty($this->fore_colors)) {
-			$this->out(TK_NL);
-			$this->out("Unable to output colors. This Operating system doesn't support this feature.");
-			$this->out(TK_NL);
+			$this->output(TK_NL);
+			$this->output("Unable to output colors. This Operating system doesn't support this feature.");
+			$this->output(TK_NL);
 		}
 		
-		$this->out(TK_NL);
-		$this->out(' [Forecolors] ' . "\t" . '[Backcolors]', 'black', 'yellow', false);
-		$this->out(TK_NL);
+		$this->output(TK_NL);
+		$this->output(' [Forecolors] ' . "\t" . '[Backcolors]', 'black', 'yellow', false);
+		$this->output(TK_NL);
 		
 		reset($this->fore_colors);
 		reset($this->back_colors);
@@ -295,7 +287,7 @@ class response {
 		ksort($this->back_colors);
 		
 		for($i = 0; $i < count($this->fore_colors); $i++) {
-			$this->out(' '. key($this->fore_colors) . ' ', key($this->fore_colors), NULL, false);
+			$this->output(' '. key($this->fore_colors) . ' ', key($this->fore_colors), NULL, false);
 			
 			if(key($this->back_colors)) {
 				$j = '';
@@ -303,11 +295,11 @@ class response {
 				for($k = 0; $k < $val; $k++) {
 					$j .= ' ';
 				}
-				$this->out(' ' . $j, NULL, NULL, false);
-				$this->out(' ' . key($this->back_colors) . ' ', 'black', key($this->back_colors), false);
+				$this->output(' ' . $j, NULL, NULL, false);
+				$this->output(' ' . key($this->back_colors) . ' ', 'black', key($this->back_colors), false);
 			}
 			
-			$this->out(TK_NL);
+			$this->output(TK_NL);
 			next($this->fore_colors);
 			next($this->back_colors);
 		}

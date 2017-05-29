@@ -95,17 +95,7 @@ class app extends app_core {
 		
 		/* Load object for requested addon */
 		$addon = $this->addons->load($id_addon);
-		
-		/* Check, is addon is object */
-		if(!is_object($addon)) {
-			
-			tk_e::log('Addon `'.$id_addon.'` exists but not an object!',
-				E_USER_ERROR, __FILE__, __LINE__);
-			
-			$this->response->output_usage('Addon `'.$id_addon.'` not exists!');
-			exit(1);
-		}
-		
+				
 		/* Check, is addon allowed under current run mode */
 		if($addon->config('allow_cli', 'CORE') != '1') {
 			trigger_error('Cannot call Addon "'.$id_addon.'" in CLI mode!',
@@ -132,7 +122,7 @@ class app extends app_core {
 			'app->'.__FUNCTION__);
 		
 		/* Call requested action method of loaded addon */
-		$addon->$function_to_call($this->request->params());
+		$addon->$function_to_call($this->request->cli_params());
 		// call_user_func_array(array($addon, $function_to_call), $this->params);
 		
 		unset($function_to_call);

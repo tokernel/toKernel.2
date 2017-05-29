@@ -5,9 +5,9 @@
  */
 class routing extends routing_core {
 	
-	public static function parse_cli_interface($args) {
+	public static function parse_cli($args) {
 		
-		$interface = array(
+		$data = array(
 			'cli_params' => $args,
 			'language_prefix' => 'en',
 			'addon' => '',
@@ -16,18 +16,18 @@ class routing extends routing_core {
 			'cli_params_orig' => $args
 		);
 		
-		$interface = array_merge($interface, self::parse_route($interface));
+		$data = array_merge($data, self::parse_route($data));
 		
-		$interface['addon'] = array_shift($interface['cli_params']);
+		$data['addon'] = array_shift($data['cli_params']);
 		
-		if(!empty($interface['cli_params'])) {
-			$interface['action'] = array_shift($interface['cli_params']);
+		if(!empty($data['cli_params'])) {
+			$data['action'] = array_shift($data['cli_params']);
 		}
 		
-		$interface['addon'] = strtolower($interface['addon']);
-		$interface['action'] = strtolower($interface['action']);
+		$data['addon'] = strtolower($data['addon']);
+		$data['action'] = strtolower($data['action']);
 		
-		return $interface;
+		return $data;
 	}
 	
 	/**
@@ -35,20 +35,20 @@ class routing extends routing_core {
 	 *
 	 * @static
 	 * @access public
-	 * @param array $interface
+	 * @param array $data
 	 * @return array|bool
 	 */
-	static public function parse_route($interface) {
-				
-		$interface['cli_params_orig'] = $interface['cli_params'];
+	static public function parse_route($data) {
+
+		$data['cli_params_orig'] = $data['cli_params'];
 		
 		/*
 		* Remove first element of $args array,
 		* that will be the file name: index.php
 		*/
-		array_shift($interface['cli_params']);
-		
-		$q_arr = $interface['cli_params'];
+		array_shift($data['cli_params']);
+				
+		$q_arr = $data['cli_params'];
 		
 		$routes_ini = lib::instance()->ini->instance(TK_APP_PATH . 'config' . TK_DS . 'routes.ini');
 		
@@ -67,20 +67,18 @@ class routing extends routing_core {
 			$nqs = self::compare_route($q_arr, $r_arr, $v_arr);
 			
 			if($nqs !== false) {
-				parent::$args = $nqs;
+								
+				$data['route_parsed'] = $item.'='.$value;
+				$data['cli_params'] = $nqs;
 				
-				$interface['route_parsed'] = $item.'='.$value;
-				//$interface['cli_params_orig'] = $interface['cli_params'];
-				$interface['cli_params'] = $nqs;
-				
-				return $interface;
+				return $data;
 			}
 			
 		}
 						
 		unset($routes_ini);
 		
-		return $interface;
+		return $data;
 		
 	} // End func parse_route
 	

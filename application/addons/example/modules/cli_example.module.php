@@ -60,7 +60,7 @@ class example_cli_example_module extends module {
         $this->response->output('Hello!', 'yellow');
         $this->response->output('You were called this application with parameters listed bellow:', 'white');
         
-        $params = $this->request->params();
+        $params = $this->request->cli_params();
 
         if(empty($params)) {
             $this->response->output('There are no params!', 'red');
@@ -72,7 +72,7 @@ class example_cli_example_module extends module {
         }
 	    
         // Get Parameter from CLI
-        $name = $this->request->params(0);
+        $name = $this->request->cli_params(0);
         
         $this->response->output('And the first param is: ' . $name, 'green', 'white');
         

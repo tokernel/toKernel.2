@@ -755,7 +755,7 @@ class example_addon extends user_base_addon {
 		$this->response->output_usage('Just testing! :)');
 		
 		$this->response->output(
-			$this->request->params(0),
+			$this->request->cli_params(0),
 			'yellow',
 			'red'
 		);

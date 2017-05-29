@@ -71,82 +71,10 @@ class request {
 	 * @var object
 	 */
 	protected $lib;
-	
-	/**
-	 * Default language prefix
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $language_prefix = 'en';
-	
-	/**
-	 * Allowed languages
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $allowed_languages = array('en');
-	
-	/**
-	 * LParse language from request URL
-	 *
-	 * @access protected
-	 * @var bool
-	 */
-	protected $language_parsing = false;
 		
-	/**
-	 * Parsed URL parameters array
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $url_params = array();
-	
-	/**
-	 * Parsed URL parts
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $url_parts = array();
-	
 	// array
 	protected $input;
-	
-	/**
-	 * Loaded addon id
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $addon = '';
-	
-	/**
-	 * Loaded addons's action
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $action = '';
-	
-	/**
-	 * Base URL
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $base_url = '';
-	
-	/**
-	 * Query string
-	 *
-	 * @access protected
-	 * @var string
-	 */
-	protected $query_string = '';
-	
+		
 	/**
 	 * Deprecated globals, will removed.
 	 *
@@ -170,7 +98,6 @@ class request {
 	 */
 	final private function __construct() {
 		$this->lib = lib::instance();
-		$this->base_url = $this->dynamic_url();
 	}
 	
 	/**
@@ -374,36 +301,31 @@ class request {
 	public function language_prefix() {
 		return $this->config['language_prefix'];
 	}
-	
-	/**
-	 * Return allowed languages
-	 *
-	 * @access public
-	 * @return array
-	 * @since Version 4.0.0
-	 */
-	public function allowed_languages() {
-		return $this->allowed_languages;
-	}
-	
-	/**
-	 * Return true if language parsing from query string
-	 *
-	 * @access public
-	 * @return bool
-	 */
-	public function language_parsing() {
-		return $this->language_parsing;
-	}
-		
+			
 	/**
 	 * Return base url
 	 *
 	 * @access public
 	 * @return string
+	 * @todo add language prefix if parse allowed.
 	 */
 	public function base_url() {
-		return $this->base_url;
+		
+		$base_url = '';
+		
+		if($this->is_https()) {
+			$base_url .= 'https://';
+		} else {
+			$base_url .= 'http://';
+		}
+		
+		$base_url .= $this->config['hostname'] . '/';
+				
+		if($this->config['interface_path'] != '') {
+			$base_url .= $this->config['interface_path'] . '/';
+		}
+		
+		return $base_url;
 	}
 	
 	public function url() {
@@ -429,17 +351,7 @@ class request {
 	public function action() {
 		return $this->config['action'];
 	}
-	
-	/**
-	 * Return query string
-	 *
-	 * @access public
-	 * @return string
-	 */
-	public function query_string() {
-		return $this->query_string;
-	}
-	
+		
 	/**
 	 * Return true if the request protocol is https
 	 *
@@ -456,29 +368,7 @@ class request {
 		}
 		
 	} // End func is_https
-	
-	/**
-	 * Generate and return server url
-	 *
-	 * @access public
-	 * @return string
-	 */
-	public function dynamic_url() {
 		
-		$base_url = '';
-		
-		if($this->is_https()) {
-			$base_url .= 'https://';
-		} else {
-			$base_url .= 'http://';
-		}
-		
-		$base_url .= $this->server('HTTP_HOST');
-		
-		return $base_url;
-		
-	} // end func dynamic_url
-	
 	/**
 	 * Return exploded parts from url
 	 *
@@ -490,11 +380,11 @@ class request {
 	public function url_parts($index = NULL) {
 		
 		if(is_null($index)) {
-			return $this->url_parts;
+			return $this->config['url_parts'];
 		}
 		
-		if(isset($this->url_parts[$index])) {
-			return $this->url_parts[$index];
+		if(isset($this->config['url_parts'][$index])) {
+			return $this->config['url_parts'][$index];
 		}
 		
 		return false;
@@ -509,7 +399,7 @@ class request {
 	 * @since version 2.3.0
 	 */
 	public function url_parts_count() {
-		return count($this->url_parts);
+		return count($this->config['url_parts']);
 	}
 	
 	/**
@@ -522,11 +412,11 @@ class request {
 	public function url_params($index = NULL) {
 		
 		if(is_null($index)) {
-			return $this->url_params;
+			return $this->config['url_params'];
 		}
 		
-		if(isset($this->url_params[$index])) {
-			return $this->url_params[$index];
+		if(isset($this->config['url_params'][$index])) {
+			return $this->config['url_params'][$index];
 		}
 		
 		return false;
@@ -540,7 +430,7 @@ class request {
 	 * @return integer
 	 */
 	public function url_params_count() {
-		return count($this->url_params);
+		return count($this->config['url_params']);
 	}
 	
 	public function method() {

@@ -86,8 +86,7 @@ class app extends app_core {
 		 */
 		if($this->addons->exist($id_addon) == false) {
 			
-			tk_e::log('Addon `'.$id_addon.'` not exists!', E_USER_NOTICE,
-				__FILE__, __LINE__);
+			tk_e::log('Addon `'.$id_addon.'` not exists!', E_USER_NOTICE, __FILE__, __LINE__);
 			
 			$this->response->output_usage('Addon `'.$id_addon.'` not exists!');
 			exit(1);
@@ -98,8 +97,7 @@ class app extends app_core {
 				
 		/* Check, is addon allowed under current run mode */
 		if($addon->config('allow_cli', 'CORE') != '1') {
-			trigger_error('Cannot call Addon "'.$id_addon.'" in CLI mode!',
-				E_USER_ERROR);
+			trigger_error('Cannot call Addon "'.$id_addon.'" in CLI mode!', E_USER_ERROR);
 		}
 		
 		/*
@@ -110,21 +108,17 @@ class app extends app_core {
 		$function_to_call = 'cli_'.$action;
 		
 		if(method_exists($addon, $function_to_call) == false) {
-			tk_e::log("Action '" . $action."' of addon '" .
-				$id_addon."' not exists!", E_USER_NOTICE, __FILE__, __LINE__);
+			tk_e::log("Action '" . $action."' of addon '" . $id_addon."' not exists!", E_USER_NOTICE, __FILE__, __LINE__);
 			
 			$this->response->output_usage("Action '" . $action."' of addon '" . $id_addon . "' not exists!");
 			exit(1);
 		}
 		
-		tk_e::log_debug('Call addon\'s action - "' .
-			$addon->id() . "->" . $function_to_call . '"',
-			'app->'.__FUNCTION__);
+		tk_e::log_debug('Call addon\'s action - "' . $addon->id() . "->" . $function_to_call . '"', 'app->'.__FUNCTION__);
 		
 		/* Call requested action method of loaded addon */
 		$addon->$function_to_call($this->request->cli_params());
-		// call_user_func_array(array($addon, $function_to_call), $this->params);
-		
+				
 		unset($function_to_call);
 		
 		/* Call last hook after main addon call for cli */

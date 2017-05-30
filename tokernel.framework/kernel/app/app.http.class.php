@@ -173,7 +173,7 @@ class app extends app_core {
 		$addon_exists = $this->addons->exist($id_addon);
 		
 		if($addon_exists == false and $id_addon == $this->config->item_get('default_callable_addon', 'HTTP')) {
-			tk_e::error(E_USER_ERROR, 'Default callable addon not exists.', __FILE__, __LINE__);
+			tk_e::error(E_USER_ERROR, 'Default callable addon `'.$id_addon.'` not exists.', __FILE__, __LINE__);
 		}
 		
 		/* Check, if the callable addon not exists */
@@ -186,8 +186,7 @@ class app extends app_core {
 				
 		/* Check, is addon allowed under current run mode */
 		if($addon->config('allow_http', 'CORE') != '1') {
-			trigger_error('Addon "'.$id_addon.'" cannot run under HTTP mode!',
-				E_USER_ERROR);
+			trigger_error('Addon "'.$id_addon.'" cannot run under HTTP mode!', E_USER_ERROR);
 			return false;
 		}
 		

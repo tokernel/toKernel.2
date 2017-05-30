@@ -196,7 +196,7 @@ class routing extends routing_core {
 		
 		// Add Interface path to base URL
 		if($build_base_url == true) {
-			$data['request']['base_url'] .= $data['interface_path'];
+			$data['request']['base_url'] .= $data['request']['interface_path'];
 		}
 		
 		$url_params = substr($data['request']['url_parts'], strlen($interface_path));
@@ -351,7 +351,7 @@ class routing extends routing_core {
 		
 		// Load actual Routes for interface
 		$routes = $routes_ini->section_get($data['request']['interface_name']);
-		
+				
 		if(empty($routes)) {
 			$routes = array();
 		}

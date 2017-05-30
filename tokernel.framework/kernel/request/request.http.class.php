@@ -433,6 +433,10 @@ class request {
 		return count($this->config['url_params']);
 	}
 	
+	public function interface_name() {
+		return $this->config['interface_name'];
+	}
+	
 	public function method() {
 		if(isset($_SERVER['REQUEST_METHOD'])) {
 			return $_SERVER['REQUEST_METHOD'];

@@ -109,17 +109,18 @@ class app extends app_core {
 		}
 		
 		/*
-		 * Load page content from cache if the cache configured
-		 * and the request method is not "Post"
+		 * Trying to load page content from cache.
+		 * NOTICE:
+		 *  Cache works only in GET request.
+		 *  Cache should be configured in caching.ini file with name of HTTP Interface.
+		 *  For example: Interface "ABC" should be configured in file with [ABC] Section.
+		 *  If no interface Defined, the section [tokernel_default] will be used.
 		 *
-		 * To disable caching, set cache_expiration to 0
-		 * in application/config/caching.ini
-		 * where the default configuration section is [tokernel_default]
-		 * the value -1 assume that the cache will never expire.
+		 *  cache_expiration: the value -1 assume that the cache is never expired.
 		 */
-		$cache = $this->lib->cache->instance();
+		$cache = $this->lib->cache->instance($this->request->interface_name());
 		$ce_ = $cache->config('cache_expiration');
-		
+						
 		if(($ce_ > 0 or $ce_ == '-1') and $this->request->method() == 'GET') {
 						
 			/*
@@ -138,7 +139,7 @@ class app extends app_core {
 			if($cached_content) {
 				
 				$this->response->set_content($cached_content);
-				
+								
 				$this->is_output_content_cached = true;
 				
 				unset($cached_content);
